@@ -1,0 +1,228 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const faqs = [
+  {
+    q: 'How long should a meta title be?',
+    a: 'Aim for 50–60 characters. Google measures by pixel width, not character count, but that range is the safest bet against truncation on most searches.',
+  },
+  {
+    q: 'How long should a meta description be?',
+    a: 'Keep it to 150–160 characters. Google sometimes rewrites your description in the results anyway, but a good one still improves click-through when it is shown.',
+  },
+  {
+    q: 'Do meta keywords still matter?',
+    a: 'No. Google has ignored the meta keywords tag for search ranking for years, which is why this tool does not generate one.',
+  },
+  {
+    q: 'Will this actually improve my Google ranking?',
+    a: 'A well-written title and description improve click-through rate, which is a positive signal — but they are one small piece of SEO, not a fix for deeper technical or content issues.',
+  },
+];
+---
+<BaseLayout
+  title="Free SEO Meta Tag Generator (with Live Google Preview) | Veloce Tools"
+  description="Generate an optimized meta title, description, and Open Graph tags for any page. See a live Google search preview and copy the ready-made HTML — free, no signup."
+  jsonLd={[
+    {
+      '@context': 'https://schema.org',
+      '@type': 'SoftwareApplication',
+      name: 'SEO Meta Tag Generator',
+      applicationCategory: 'BrowserApplication',
+      operatingSystem: 'Any',
+      offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+      description: 'Free browser-based tool to generate SEO meta title, description, and Open Graph tags with a live Google search preview.',
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: faqs.map((f) => ({
+        '@type': 'Question',
+        name: f.q,
+        acceptedAnswer: { '@type': 'Answer', text: f.a },
+      })),
+    },
+  ]}
+>
+  <section class="section--tight">
+    <div class="tool-hero">
+      <span class="eyebrow">Free tool</span>
+      <h1>SEO Meta Tag Generator</h1>
+      <p>Write your title and description, watch a live Google preview update as you type, then copy the finished HTML into your page's &lt;head&gt;.</p>
+    </div>
+
+    <div class="mtg">
+      <div>
+        <div class="field">
+          <label for="mtg-title">Page title</label>
+          <input id="mtg-title" type="text" maxlength="120" placeholder="e.g. Affordable Web Design in Lahore | Veloce Digital" />
+          <span class="count" id="mtg-title-count">0 / 60</span>
+        </div>
+        <div class="field">
+          <label for="mtg-desc">Meta description</label>
+          <textarea id="mtg-desc" maxlength="300" placeholder="A one- to two-sentence summary of the page, written to make someone want to click."></textarea>
+          <span class="count" id="mtg-desc-count">0 / 160</span>
+        </div>
+        <div class="field">
+          <label for="mtg-url">Page URL</label>
+          <input id="mtg-url" type="text" placeholder="https://example.com/page" />
+        </div>
+        <div class="field">
+          <label for="mtg-site">Site name <span class="optional">(optional, used for Open Graph)</span></label>
+          <input id="mtg-site" type="text" placeholder="e.g. Veloce Digital" />
+        </div>
+        <button type="button" class="secondary-button" id="mtg-reset" style="width:100%; text-align:center;">Reset</button>
+      </div>
+
+      <div class="mtg__preview-col">
+        <p class="mtg__label">Google search preview</p>
+        <div class="serp" id="mtg-serp">
+          <div class="serp__site">
+            <span class="serp__favicon" aria-hidden="true"></span>
+            <div>
+              <p class="serp__sitename" id="serp-sitename">yoursite.com</p>
+              <p class="serp__url" id="serp-url">https://example.com/page</p>
+            </div>
+          </div>
+          <p class="serp__title" id="serp-title">Your page title will appear here</p>
+          <p class="serp__desc" id="serp-desc">Your meta description will appear here once you start typing above.</p>
+        </div>
+
+        <p class="mtg__label">Generated HTML</p>
+        <pre class="mtg__code" id="mtg-code"><code id="mtg-code-text">&lt;!-- Fill in the fields above --&gt;</code></pre>
+        <button type="button" class="primary-button" id="mtg-copy" style="width:100%; border:none; text-align:center;">Copy HTML</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="section--tight prose">
+    <span class="eyebrow">How it works</span>
+    <h2>Four fields, one paste.</h2>
+    <ol>
+      <li><strong>Write your title</strong> — the headline in the Google results tab. Keep your main keyword near the front.</li>
+      <li><strong>Write your description</strong> — the pitch under the title. Say what the page is and why someone should click.</li>
+      <li><strong>Add the URL and site name</strong> — these fill the canonical link and the Open Graph tags used by WhatsApp, Facebook, and LinkedIn link previews.</li>
+      <li><strong>Copy the HTML</strong> and paste it inside the <code>&lt;head&gt;</code> of that page.</li>
+    </ol>
+  </section>
+
+  <section class="section--tight prose">
+    <span class="eyebrow">Why it matters</span>
+    <h2>Your meta tags are your ad in the search results.</h2>
+    <p>Google doesn't rank a page higher just because the description is well-written — but it's often the only thing standing between a search and a click. A vague or truncated title loses clicks to a competitor with a clearer one, even at the same ranking position. Missing Open Graph tags mean a shared link shows up blank on WhatsApp or Facebook.</p>
+    <p>This tool handles the formatting correctly — the right limits, the right tag names, matching Open Graph and Twitter Card data — so you can focus on writing copy people actually want to click.</p>
+  </section>
+
+  <section class="section--tight">
+    <span class="eyebrow">FAQ</span>
+    <h2 style="font-size:32px; letter-spacing:-1.5px; margin-bottom:20px;">Common questions</h2>
+    <div class="faq">
+      {faqs.map((f) => (
+        <details class="faq-item">
+          <summary>
+            {f.q}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </summary>
+          <p>{f.a}</p>
+        </details>
+      ))}
+    </div>
+  </section>
+
+  <section class="cta">
+    <h2>Want your whole site's SEO handled?</h2>
+    <p>Meta tags are one small piece. Veloce Digital's SEO team covers technical audits, content, and rankings end to end.</p>
+    <a href="https://velocedigital.co/seo.html?utm_source=veloce_tools&utm_medium=meta_tag_generator" target="_blank" rel="noopener" class="cta-button">See SEO Services</a>
+  </section>
+
+  <style>
+    .mtg{ display:grid; grid-template-columns:1fr 1fr; gap:50px; align-items:start; margin-top:50px; }
+    @media (max-width:900px){ .mtg{ grid-template-columns:1fr; } }
+    .mtg__preview-col{ position:sticky; top:90px; }
+    .mtg__label{ font-size:12px; font-weight:600; color:#999; margin:0 0 10px; text-transform:uppercase; letter-spacing:.05em; }
+    .mtg__preview-col .mtg__label:not(:first-child){ margin-top:24px; }
+    .serp{ background:#fff; border-radius:14px; padding:18px 20px; font-family:arial, sans-serif; border:1px solid #e3e3e3; }
+    .serp__site{ display:flex; align-items:center; gap:.7rem; }
+    .serp__favicon{ width:26px; height:26px; border-radius:50%; flex:none; background:#111; }
+    .serp__sitename{ margin:0; font-size:.85rem; color:#202124; font-weight:500; }
+    .serp__url{ margin:0; font-size:.78rem; color:#4d5156; word-break:break-all; }
+    .serp__title{ margin:.35rem 0 .2rem; color:#1a0dab; font-size:1.15rem; line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .serp__desc{ margin:0; color:#4d5156; font-size:.88rem; line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .mtg__code{ background:#111; border-radius:12px; padding:16px 18px; font-size:12.5px; line-height:1.6; color:rgba(255,255,255,.85); overflow-x:auto; white-space:pre; max-height:16rem; margin:0 0 16px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; }
+  </style>
+
+  <script slot="body-end" is:inline>
+(function () {
+  var titleEl = document.getElementById('mtg-title');
+  var descEl = document.getElementById('mtg-desc');
+  var urlEl = document.getElementById('mtg-url');
+  var siteEl = document.getElementById('mtg-site');
+  var titleCount = document.getElementById('mtg-title-count');
+  var descCount = document.getElementById('mtg-desc-count');
+  var serpSitename = document.getElementById('serp-sitename');
+  var serpUrl = document.getElementById('serp-url');
+  var serpTitle = document.getElementById('serp-title');
+  var serpDesc = document.getElementById('serp-desc');
+  var codeText = document.getElementById('mtg-code-text');
+  var copyBtn = document.getElementById('mtg-copy');
+  var resetBtn = document.getElementById('mtg-reset');
+
+  function escapeHtml(str) {
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  function setCount(el, countEl, limit) {
+    var len = el.value.length;
+    countEl.textContent = len + ' / ' + limit;
+    countEl.classList.remove('is-warn', 'is-bad');
+    if (len > limit) countEl.classList.add('is-bad');
+    else if (len > limit * 0.85) countEl.classList.add('is-warn');
+  }
+  function hostnameFrom(url) {
+    try { return new URL(url).hostname.replace(/^www\./, ''); }
+    catch (e) { return url ? url.replace(/^https?:\/\//, '').split('/')[0] : 'yoursite.com'; }
+  }
+  function render() {
+    var title = titleEl.value.trim();
+    var desc = descEl.value.trim();
+    var url = urlEl.value.trim();
+    var site = siteEl.value.trim();
+
+    setCount(titleEl, titleCount, 60);
+    setCount(descEl, descCount, 160);
+
+    serpTitle.textContent = title || 'Your page title will appear here';
+    serpDesc.textContent = desc || 'Your meta description will appear here once you start typing above.';
+    serpUrl.textContent = url || 'https://example.com/page';
+    serpSitename.textContent = hostnameFrom(url);
+
+    var lines = [];
+    if (title) lines.push('<title>' + escapeHtml(title) + '</title>');
+    if (desc) lines.push('<meta name="description" content="' + escapeHtml(desc) + '">');
+    if (url) lines.push('<link rel="canonical" href="' + escapeHtml(url) + '">');
+    lines.push('', '<!-- Open Graph -->', '<meta property="og:type" content="website">');
+    if (title) lines.push('<meta property="og:title" content="' + escapeHtml(title) + '">');
+    if (desc) lines.push('<meta property="og:description" content="' + escapeHtml(desc) + '">');
+    if (url) lines.push('<meta property="og:url" content="' + escapeHtml(url) + '">');
+    if (site) lines.push('<meta property="og:site_name" content="' + escapeHtml(site) + '">');
+    lines.push('', '<!-- Twitter Card -->', '<meta name="twitter:card" content="summary_large_image">');
+    if (title) lines.push('<meta name="twitter:title" content="' + escapeHtml(title) + '">');
+    if (desc) lines.push('<meta name="twitter:description" content="' + escapeHtml(desc) + '">');
+
+    codeText.textContent = lines.length > 6 ? lines.join('\n') : '<!-- Fill in the fields above -->';
+  }
+  [titleEl, descEl, urlEl, siteEl].forEach(function (el) { el.addEventListener('input', render); });
+  resetBtn.addEventListener('click', function () {
+    titleEl.value = descEl.value = urlEl.value = siteEl.value = '';
+    render();
+  });
+  copyBtn.addEventListener('click', function () {
+    navigator.clipboard.writeText(codeText.textContent).then(function () {
+      var original = copyBtn.textContent;
+      copyBtn.textContent = 'Copied!';
+      setTimeout(function () { copyBtn.textContent = original; }, 1600);
+    });
+  });
+  render();
+})();
+  </script>
+</BaseLayout>

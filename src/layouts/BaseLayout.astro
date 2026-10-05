@@ -1,0 +1,45 @@
+---
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  jsonLd?: Record<string, any> | Record<string, any>[];
+}
+const { title, description, jsonLd } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site).toString();
+const ldBlocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <link rel="canonical" href={canonical} />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Veloce Tools" />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:url" content={canonical} />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content={title} />
+  <meta name="twitter:description" content={description} />
+
+  <link rel="stylesheet" href="/css/style.css" />
+
+  {ldBlocks.map((block) => (
+    <script type="application/ld+json" set:html={JSON.stringify(block)} />
+  ))}
+  <slot name="head" />
+</head>
+<body>
+  <Header />
+  <slot />
+  <Footer />
+  <slot name="body-end" />
+</body>
+</html>
