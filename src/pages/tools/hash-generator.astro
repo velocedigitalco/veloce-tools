@@ -1,0 +1,97 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const faqs = [
+  { q: 'Which algorithm should I use?', a: 'SHA-256 is the standard default for most purposes (checksums, verifying file integrity, non-password data fingerprinting). SHA-1 is considered weak for security purposes but still used for legacy compatibility checks.' },
+  { q: 'Can I use this to hash passwords?', a: 'Not recommended as-is. Password hashing needs a slow, salted algorithm (like bcrypt or Argon2) specifically designed to resist brute-force attacks — plain SHA-256 is too fast, which actually works against you for that use case.' },
+  { q: 'Is this computed locally?', a: 'Yes — using the browser\'s built-in Web Crypto API (crypto.subtle.digest). Your input text never leaves your device.' },
+];
+---
+<BaseLayout
+  title="Free SHA-256 / SHA-1 Hash Generator | Veloce Tools"
+  description="Generate SHA-1, SHA-256, SHA-384, or SHA-512 hashes instantly using your browser's Web Crypto API. Free, no signup, nothing sent to a server."
+  jsonLd={[
+    { '@context': 'https://schema.org', '@type': 'SoftwareApplication', name: 'Hash Generator', applicationCategory: 'BrowserApplication', operatingSystem: 'Any', offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' } },
+    { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
+  ]}
+>
+  <section class="section--tight">
+    <div class="tool-hero">
+      <span class="eyebrow">Free tool</span>
+      <h1>Hash Generator</h1>
+      <p>Generate a cryptographic hash of any text, computed locally using your browser's Web Crypto API.</p>
+    </div>
+
+    <div class="field">
+      <label for="hashInput">Text to hash</label>
+      <textarea id="hashInput" placeholder="Enter text..." style="min-height:140px;"></textarea>
+    </div>
+
+    <p class="tool-label">Algorithm</p>
+    <div class="segmented" style="max-width:500px;">
+      <label><input type="radio" name="alg" value="SHA-1"><span>SHA-1</span></label>
+      <label><input type="radio" name="alg" value="SHA-256" checked><span>SHA-256</span></label>
+      <label><input type="radio" name="alg" value="SHA-384"><span>SHA-384</span></label>
+      <label><input type="radio" name="alg" value="SHA-512"><span>SHA-512</span></label>
+    </div>
+
+    <p class="tool-label" style="margin-top:20px;">Result</p>
+    <div class="result-row">
+      <div class="result-box" id="hashResult" style="font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:13px; word-break:break-all;"></div>
+      <button type="button" class="copy-btn" id="copyBtn">Copy</button>
+    </div>
+  </section>
+
+  <section class="section--tight prose">
+    <span class="eyebrow">Why it matters</span>
+    <h2>A hash is a fingerprint, not a password.</h2>
+    <p>Hashes let you verify that a file or piece of data hasn't changed — compare the hash you compute against a published one, and if they match, the content is identical, byte for byte. Any single-character change produces a completely different hash.</p>
+  </section>
+
+  <section class="section--tight">
+    <span class="eyebrow">FAQ</span>
+    <h2 style="font-size:32px; letter-spacing:-1.5px; margin-bottom:20px;">Common questions</h2>
+    <div class="faq">
+      {faqs.map((f) => (
+        <details class="faq-item">
+          <summary>{f.q}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></summary>
+          <p>{f.a}</p>
+        </details>
+      ))}
+    </div>
+  </section>
+
+  <section class="cta">
+    <h2>Need real security review, not just a hash?</h2>
+    <p>Veloce Digital audits and hardens website security end to end.</p>
+    <a href="https://velocedigital.co/security-scanning.html?utm_source=veloce_tools&utm_medium=hash_generator" target="_blank" rel="noopener" class="cta-button">See Security Services</a>
+  </section>
+
+  <script slot="body-end" is:inline>
+(function () {
+  var input = document.getElementById('hashInput');
+  var result = document.getElementById('hashResult');
+  var copyBtn = document.getElementById('copyBtn');
+
+  function alg() { return document.querySelector('input[name="alg"]:checked').value; }
+
+  async function compute() {
+    var text = input.value;
+    if (!text) { result.textContent = ''; return; }
+    var data = new TextEncoder().encode(text);
+    var hashBuffer = await crypto.subtle.digest(alg(), data);
+    var hex = Array.from(new Uint8Array(hashBuffer)).map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+    result.textContent = hex;
+  }
+
+  input.addEventListener('input', compute);
+  document.querySelectorAll('input[name="alg"]').forEach(function (el) { el.addEventListener('change', compute); });
+  copyBtn.addEventListener('click', function () {
+    navigator.clipboard.writeText(result.textContent).then(function () {
+      copyBtn.classList.add('is-copied'); copyBtn.textContent = 'Copied!';
+      setTimeout(function () { copyBtn.classList.remove('is-copied'); copyBtn.textContent = 'Copy'; }, 1500);
+    });
+  });
+})();
+  </script>
+</BaseLayout>

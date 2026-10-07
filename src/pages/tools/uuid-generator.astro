@@ -1,0 +1,114 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const faqs = [
+  { q: 'What is a UUID used for?', a: 'UUIDs (universally unique identifiers) are used as database keys, API request IDs, session tokens, and anywhere you need an identifier that won\'t collide with another one generated elsewhere, without coordinating with a central server.' },
+  { q: 'Is this UUID v4?', a: 'Yes — version 4, generated using the browser\'s cryptographically secure random number generator (crypto.randomUUID). This is the most commonly used UUID version for general-purpose unique IDs.' },
+  { q: 'Could two generated UUIDs ever collide?', a: 'Practically, no. A v4 UUID has 122 random bits — you\'d need to generate roughly a billion per second for about 85 years before a 50% chance of a single collision.' },
+];
+---
+<BaseLayout
+  title="Free UUID Generator (v4) — Generate Multiple Instantly | Veloce Tools"
+  description="Generate random UUID v4 identifiers instantly, one or many at once. Free, no signup, runs entirely in your browser."
+  jsonLd={[
+    { '@context': 'https://schema.org', '@type': 'SoftwareApplication', name: 'UUID Generator', applicationCategory: 'BrowserApplication', operatingSystem: 'Any', offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' } },
+    { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
+  ]}
+>
+  <section class="section--tight">
+    <div class="tool-hero">
+      <span class="eyebrow">Free tool</span>
+      <h1>UUID Generator</h1>
+      <p>Generate one or many random UUID v4 identifiers, ready to copy.</p>
+    </div>
+
+    <div style="max-width:600px;">
+      <div class="slider-row">
+        <div class="slider-top"><span>How many</span><strong id="countValue">5</strong></div>
+        <input type="range" id="count" min="1" max="20" value="5" />
+      </div>
+      <button type="button" class="primary-button" id="generateBtn" style="width:100%; border:none; text-align:center;">Generate</button>
+
+      <div class="uuid-list" id="uuidList" style="margin-top:20px;"></div>
+      <button type="button" class="secondary-button" id="copyAllBtn" style="width:100%; margin-top:14px; text-align:center;">Copy all</button>
+    </div>
+  </section>
+
+  <section class="section--tight prose">
+    <span class="eyebrow">Why it matters</span>
+    <h2>Good IDs are boring, which is the point.</h2>
+    <p>Auto-incrementing database IDs leak information (how many rows exist, how fast a table grows) and collide if you ever merge data from two sources. UUIDs sidestep both problems — they're generated independently, anywhere, with no coordination needed.</p>
+  </section>
+
+  <section class="section--tight">
+    <span class="eyebrow">FAQ</span>
+    <h2 style="font-size:32px; letter-spacing:-1.5px; margin-bottom:20px;">Common questions</h2>
+    <div class="faq">
+      {faqs.map((f) => (
+        <details class="faq-item">
+          <summary>{f.q}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></summary>
+          <p>{f.a}</p>
+        </details>
+      ))}
+    </div>
+  </section>
+
+  <section class="cta">
+    <h2>Building the system these IDs go into?</h2>
+    <p>Veloce Digital builds the backend, not just the free tool.</p>
+    <a href="https://velocedigital.co/website-development.html?utm_source=veloce_tools&utm_medium=uuid_generator" target="_blank" rel="noopener" class="cta-button">See Development Services</a>
+  </section>
+
+  <script slot="body-end" is:inline>
+(function () {
+  var countInput = document.getElementById('count');
+  var countValue = document.getElementById('countValue');
+  var list = document.getElementById('uuidList');
+  var current = [];
+
+  function makeUUID() {
+    if (crypto.randomUUID) return crypto.randomUUID();
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+      var r = Math.random() * 16 | 0;
+      var v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
+
+  function render() {
+    var n = Number(countInput.value);
+    countValue.textContent = n;
+    current = Array.from({ length: n }, makeUUID);
+    list.innerHTML = current.map(function (id, i) {
+      return '<div class="uuid-row"><div class="result-box">' + id + '</div>' +
+        '<button type="button" class="copy-btn" data-i="' + i + '">Copy</button></div>';
+    }).join('');
+  }
+
+  countInput.addEventListener('input', function () { countValue.textContent = countInput.value; });
+  document.getElementById('generateBtn').addEventListener('click', render);
+
+  list.addEventListener('click', function (e) {
+    var btn = e.target.closest('.copy-btn');
+    if (!btn) return;
+    var i = Number(btn.dataset.i);
+    navigator.clipboard.writeText(current[i]).then(function () {
+      var original = btn.textContent;
+      btn.textContent = 'Copied!';
+      btn.classList.add('is-copied');
+      setTimeout(function () { btn.textContent = original; btn.classList.remove('is-copied'); }, 1200);
+    });
+  });
+
+  document.getElementById('copyAllBtn').addEventListener('click', function () {
+    navigator.clipboard.writeText(current.join('\n'));
+    var btn = document.getElementById('copyAllBtn');
+    var original = btn.textContent;
+    btn.textContent = 'Copied all!';
+    setTimeout(function () { btn.textContent = original; }, 1200);
+  });
+
+  render();
+})();
+  </script>
+</BaseLayout>

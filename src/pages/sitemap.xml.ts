@@ -1,6 +1,18 @@
 const pages = [
   { path: '/', priority: '1.0', changefreq: 'weekly' },
   { path: '/tools/seo-meta-tag-generator', priority: '0.8', changefreq: 'monthly' },
+  { path: '/tools/qr-code-generator', priority: '0.8', changefreq: 'monthly' },
+  { path: '/tools/image-compressor', priority: '0.8', changefreq: 'monthly' },
+  { path: '/tools/image-converter', priority: '0.8', changefreq: 'monthly' },
+  { path: '/tools/json-formatter', priority: '0.8', changefreq: 'monthly' },
+  { path: '/tools/password-generator', priority: '0.8', changefreq: 'monthly' },
+  { path: '/tools/text-counter', priority: '0.8', changefreq: 'monthly' },
+  { path: '/tools/uuid-generator', priority: '0.8', changefreq: 'monthly' },
+  { path: '/tools/base64-encoder-decoder', priority: '0.8', changefreq: 'monthly' },
+  { path: '/tools/url-encoder-decoder', priority: '0.8', changefreq: 'monthly' },
+  { path: '/tools/timestamp-converter', priority: '0.8', changefreq: 'monthly' },
+  { path: '/tools/hash-generator', priority: '0.8', changefreq: 'monthly' },
+  { path: '/tools/color-converter', priority: '0.8', changefreq: 'monthly' },
   { path: '/privacy', priority: '0.3', changefreq: 'yearly' },
   { path: '/terms', priority: '0.3', changefreq: 'yearly' },
 ];

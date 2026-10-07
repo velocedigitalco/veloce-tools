@@ -1,0 +1,132 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const faqs = [
+  { q: 'What\'s the difference between RGB and HSL?', a: 'RGB defines a color by red, green, and blue light intensity (0–255 each). HSL defines it by hue (color on a wheel), saturation (intensity), and lightness — often more intuitive for adjusting a color (lighter, more muted, etc.) by hand.' },
+  { q: 'Can I enter a color name like "tomato"?', a: 'This tool works with HEX and the color picker — for named CSS colors, check them against a CSS color reference first and convert the HEX value here.' },
+  { q: 'Is there an alpha/opacity value?', a: 'Not in this version — it converts fully opaque colors. For transparency, append an alpha value to the RGB/HSL output manually (e.g. rgba(…, 0.5)).' },
+];
+---
+<BaseLayout
+  title="Free HEX to RGB / HSL Color Converter | Veloce Tools"
+  description="Convert HEX colors to RGB and HSL instantly, with a live preview swatch and color picker. Free, no signup."
+  jsonLd={[
+    { '@context': 'https://schema.org', '@type': 'SoftwareApplication', name: 'Color Converter', applicationCategory: 'BrowserApplication', operatingSystem: 'Any', offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' } },
+    { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
+  ]}
+>
+  <section class="section--tight">
+    <div class="tool-hero">
+      <span class="eyebrow">Free tool</span>
+      <h1>Color Converter</h1>
+      <p>Convert between HEX, RGB, and HSL with a live preview.</p>
+    </div>
+
+    <div style="max-width:500px;">
+      <div class="swatch-row">
+        <div class="swatch" id="swatch" style="background:#4438ca;"></div>
+        <div class="field" style="flex:1; margin-bottom:0;">
+          <label for="colorPicker">Pick a color</label>
+          <input type="color" id="colorPicker" value="#4438ca" style="height:46px; width:100%; padding:4px;" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="hexInput">HEX</label>
+        <input id="hexInput" type="text" value="#4438CA" />
+      </div>
+      <div class="result-box" id="colorResult" style="font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:14px; line-height:1.8;"></div>
+      <button type="button" class="copy-btn" id="copyBtn" style="margin-top:10px;">Copy all</button>
+    </div>
+  </section>
+
+  <section class="section--tight prose">
+    <span class="eyebrow">Why it matters</span>
+    <h2>Design handoffs run on exact color values.</h2>
+    <p>A designer hands over a HEX code, but your CSS needs HSL to adjust lightness programmatically, or RGB for a canvas drawing API. Converting by hand is error-prone — one digit off and the color is subtly, maddeningly wrong.</p>
+  </section>
+
+  <section class="section--tight">
+    <span class="eyebrow">FAQ</span>
+    <h2 style="font-size:32px; letter-spacing:-1.5px; margin-bottom:20px;">Common questions</h2>
+    <div class="faq">
+      {faqs.map((f) => (
+        <details class="faq-item">
+          <summary>{f.q}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></summary>
+          <p>{f.a}</p>
+        </details>
+      ))}
+    </div>
+  </section>
+
+  <section class="cta">
+    <h2>Need a full brand palette and design system?</h2>
+    <p>Veloce Digital designs complete, consistent visual identities — not just one converted color.</p>
+    <a href="https://velocedigital.co/website-development.html?utm_source=veloce_tools&utm_medium=color_converter" target="_blank" rel="noopener" class="cta-button">See Design Services</a>
+  </section>
+
+  <script slot="body-end" is:inline>
+(function () {
+  var picker = document.getElementById('colorPicker');
+  var hexInput = document.getElementById('hexInput');
+  var swatch = document.getElementById('swatch');
+  var result = document.getElementById('colorResult');
+  var copyBtn = document.getElementById('copyBtn');
+
+  function hexToRgb(hex) {
+    hex = hex.replace('#', '');
+    if (hex.length === 3) hex = hex.split('').map(function (c) { return c + c; }).join('');
+    if (!/^[0-9a-fA-F]{6}$/.test(hex)) return null;
+    return {
+      r: parseInt(hex.substring(0, 2), 16),
+      g: parseInt(hex.substring(2, 4), 16),
+      b: parseInt(hex.substring(4, 6), 16),
+    };
+  }
+
+  function rgbToHsl(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    var max = Math.max(r, g, b), min = Math.min(r, g, b);
+    var h, s, l = (max + min) / 2;
+    if (max === min) { h = s = 0; }
+    else {
+      var d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+        case g: h = (b - r) / d + 2; break;
+        default: h = (r - g) / d + 4;
+      }
+      h /= 6;
+    }
+    return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
+  }
+
+  function update(hex) {
+    var rgb = hexToRgb(hex);
+    if (!rgb) { result.textContent = 'Enter a valid 6-character HEX color.'; return; }
+    var hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+    var hexClean = '#' + [rgb.r, rgb.g, rgb.b].map(function (v) { return v.toString(16).padStart(2, '0'); }).join('').toUpperCase();
+    swatch.style.background = hexClean;
+    result.textContent =
+      'HEX: ' + hexClean + '\n' +
+      'RGB: rgb(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ')\n' +
+      'HSL: hsl(' + hsl.h + ', ' + hsl.s + '%, ' + hsl.l + '%)';
+  }
+
+  picker.addEventListener('input', function () { hexInput.value = picker.value; update(picker.value); });
+  hexInput.addEventListener('input', function () {
+    update(hexInput.value);
+    var rgb = hexToRgb(hexInput.value);
+    if (rgb) picker.value = '#' + [rgb.r, rgb.g, rgb.b].map(function (v) { return v.toString(16).padStart(2, '0'); }).join('');
+  });
+  copyBtn.addEventListener('click', function () {
+    navigator.clipboard.writeText(result.textContent).then(function () {
+      copyBtn.classList.add('is-copied'); copyBtn.textContent = 'Copied!';
+      setTimeout(function () { copyBtn.classList.remove('is-copied'); copyBtn.textContent = 'Copy all'; }, 1500);
+    });
+  });
+
+  update('#4438CA');
+})();
+  </script>
+</BaseLayout>

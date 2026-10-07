@@ -1,0 +1,122 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const faqs = [
+  { q: 'Is my JSON data sent anywhere?', a: 'No. Formatting and validation happen entirely in your browser with JavaScript\'s built-in JSON parser — nothing is sent to a server.' },
+  { q: 'Why does it say my JSON is invalid?', a: 'The most common causes are trailing commas, single quotes instead of double quotes, or missing closing brackets. The error message includes the position where parsing failed, which is usually right at (or just after) the actual problem.' },
+  { q: 'What\'s the difference between format and minify?', a: 'Format adds indentation and line breaks to make JSON readable. Minify strips all unnecessary whitespace to make the file as small as possible — useful for production, bad for debugging.' },
+];
+---
+<BaseLayout
+  title="Free JSON Formatter & Validator Online | Veloce Tools"
+  description="Format, validate, and minify JSON instantly. Paste messy JSON and get a clean, readable (or compact) result — free, no signup, runs in your browser."
+  jsonLd={[
+    { '@context': 'https://schema.org', '@type': 'SoftwareApplication', name: 'JSON Formatter', applicationCategory: 'BrowserApplication', operatingSystem: 'Any', offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' } },
+    { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
+  ]}
+>
+  <section class="section--tight">
+    <div class="tool-hero">
+      <span class="eyebrow">Free tool</span>
+      <h1>JSON Formatter & Validator</h1>
+      <p>Paste messy or minified JSON, get it formatted and validated instantly — or go the other way and minify it.</p>
+    </div>
+
+    <div class="field">
+      <label for="jsonInput">JSON input</label>
+      <textarea id="jsonInput" placeholder='{"paste": "your json here"}' style="min-height:220px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:13px;"></textarea>
+    </div>
+
+    <div class="btn-row">
+      <button type="button" class="primary-button" id="formatBtn" style="border:none;">Format</button>
+      <button type="button" class="secondary-button" id="minifyBtn">Minify</button>
+      <button type="button" class="secondary-button" id="clearBtn">Clear</button>
+    </div>
+
+    <p class="tool-label" style="margin-top:24px;">Result</p>
+    <div class="result-row">
+      <pre class="result-box" id="jsonResult" style="min-height:220px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:13px; overflow:auto;">Formatted JSON will appear here.</pre>
+    </div>
+    <button type="button" class="copy-btn" id="copyBtn" style="margin-top:10px;">Copy result</button>
+    <p id="jsonMeta" class="tool-label" style="margin-top:10px; text-transform:none; letter-spacing:0;"></p>
+  </section>
+
+  <section class="section--tight prose">
+    <span class="eyebrow">Why it matters</span>
+    <h2>Debugging an API response shouldn't mean squinting at one giant line.</h2>
+    <p>APIs, logs, and config files often return JSON with no formatting at all. Pasting it here turns a wall of text into something you can actually read — nested objects indented, arrays broken out, and any syntax error flagged immediately instead of failing silently somewhere downstream.</p>
+  </section>
+
+  <section class="section--tight">
+    <span class="eyebrow">FAQ</span>
+    <h2 style="font-size:32px; letter-spacing:-1.5px; margin-bottom:20px;">Common questions</h2>
+    <div class="faq">
+      {faqs.map((f) => (
+        <details class="faq-item">
+          <summary>{f.q}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></summary>
+          <p>{f.a}</p>
+        </details>
+      ))}
+    </div>
+  </section>
+
+  <section class="cta">
+    <h2>Building something that needs real backend work?</h2>
+    <p>Veloce Digital builds custom web apps and integrations beyond what a free tool can do.</p>
+    <a href="https://velocedigital.co/website-development.html?utm_source=veloce_tools&utm_medium=json_formatter" target="_blank" rel="noopener" class="cta-button">See Web Development Services</a>
+  </section>
+
+  <script slot="body-end" is:inline>
+(function () {
+  var input = document.getElementById('jsonInput');
+  var result = document.getElementById('jsonResult');
+  var meta = document.getElementById('jsonMeta');
+  var copyBtn = document.getElementById('copyBtn');
+
+  function parseOrError() {
+    try {
+      return { ok: true, value: JSON.parse(input.value) };
+    } catch (error) {
+      return { ok: false, error: error.message };
+    }
+  }
+
+  document.getElementById('formatBtn').addEventListener('click', function () {
+    var r = parseOrError();
+    if (r.ok) {
+      result.textContent = JSON.stringify(r.value, null, 2);
+      meta.textContent = 'Valid JSON';
+    } else {
+      result.textContent = 'Invalid JSON:\n' + r.error;
+      meta.textContent = '';
+    }
+  });
+
+  document.getElementById('minifyBtn').addEventListener('click', function () {
+    var r = parseOrError();
+    if (r.ok) {
+      var minified = JSON.stringify(r.value);
+      result.textContent = minified;
+      meta.textContent = minified.length + ' characters';
+    } else {
+      result.textContent = 'Invalid JSON:\n' + r.error;
+      meta.textContent = '';
+    }
+  });
+
+  document.getElementById('clearBtn').addEventListener('click', function () {
+    input.value = '';
+    result.textContent = 'Formatted JSON will appear here.';
+    meta.textContent = '';
+  });
+
+  copyBtn.addEventListener('click', function () {
+    navigator.clipboard.writeText(result.textContent).then(function () {
+      copyBtn.classList.add('is-copied');
+      copyBtn.textContent = 'Copied!';
+      setTimeout(function () { copyBtn.classList.remove('is-copied'); copyBtn.textContent = 'Copy result'; }, 1500);
+    });
+  });
+})();
+  </script>
+</BaseLayout>

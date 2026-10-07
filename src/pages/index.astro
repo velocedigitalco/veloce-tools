@@ -1,5 +1,21 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+
+const tools = [
+  { href: '/tools/seo-meta-tag-generator', icon: '◎', title: 'SEO Meta Tag Generator', desc: 'Write an optimized title and description, and preview a live Google search result.' },
+  { href: '/tools/qr-code-generator', icon: '⌁', title: 'QR Code Generator', desc: 'Create downloadable QR codes for URLs, text and everyday sharing.' },
+  { href: '/tools/image-compressor', icon: '◌', title: 'Image Compressor', desc: 'Reduce image size directly in your browser before uploading or sharing.' },
+  { href: '/tools/image-converter', icon: '◫', title: 'Image Converter', desc: 'Convert images between PNG, JPEG and WebP without installing anything.' },
+  { href: '/tools/json-formatter', icon: '{ }', title: 'JSON Formatter', desc: 'Format, validate and make messy JSON readable in one click.' },
+  { href: '/tools/password-generator', icon: '✦', title: 'Password Generator', desc: 'Generate strong passwords locally in your browser. Nothing needs to leave your device.' },
+  { href: '/tools/text-counter', icon: 'Aa', title: 'Text Counter', desc: 'Count characters, words, lines and paragraphs instantly.' },
+  { href: '/tools/uuid-generator', icon: '#', title: 'UUID Generator', desc: 'Generate random UUIDs instantly for development, testing and data work.' },
+  { href: '/tools/base64-encoder-decoder', icon: '↔', title: 'Base64 Tool', desc: 'Encode and decode Base64 text quickly without sending your content to a server.' },
+  { href: '/tools/url-encoder-decoder', icon: '↗', title: 'URL Encoder', desc: 'Encode or decode URLs and query strings without leaving your browser.' },
+  { href: '/tools/timestamp-converter', icon: '◷', title: 'Timestamp Converter', desc: 'Convert Unix timestamps to readable dates and generate timestamps from dates.' },
+  { href: '/tools/hash-generator', icon: '#', title: 'Hash Generator', desc: 'Generate SHA-1/256/384/512 hashes directly using your browser\'s Web Crypto API.' },
+  { href: '/tools/color-converter', icon: '◉', title: 'Color Converter', desc: 'Convert HEX colors into RGB and HSL values and preview the result instantly.' },
+];
 ---
 <BaseLayout
   title="Veloce Tools — Useful tools. Beautifully simple."
@@ -43,6 +59,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           <span class="tag">PNG download</span>
           <span class="tag">Free</span>
         </div>
+        <a href="/tools/qr-code-generator" class="tool-open" style="margin-top:20px;">More options (size, color, error correction) <span>→</span></a>
       </div>
       <div class="qr-box">
         <div class="qr-input-row">
@@ -61,141 +78,23 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   <section class="section" id="tools">
     <div class="section-heading">
       <h2>One place.<br />Many useful things.</h2>
-      <p>From working with images and text to handling developer utilities and SEO, Veloce Tools keeps the small jobs small.</p>
+      <p>From working with images and text to handling developer utilities and SEO, Veloce Tools keeps the small jobs small. Every tool has its own page, so you can bookmark, share, or link straight to the one you need.</p>
     </div>
 
     <div class="tools-grid">
-      <a href="/tools/seo-meta-tag-generator" style="text-decoration:none; color:inherit;">
-        <div class="tool">
-          <div class="tool-number">01</div>
-          <div class="tool-content">
-            <div class="tool-icon">◎</div>
-            <h3>SEO Meta Tag Generator</h3>
-            <p>Write an optimized title and description, and preview a live Google search result.</p>
-            <span class="tool-open">Open tool <span>→</span></span>
+      {tools.map((tool, i) => (
+        <a href={tool.href} style="text-decoration:none; color:inherit;">
+          <div class="tool">
+            <div class="tool-number">{String(i + 1).padStart(2, '0')}</div>
+            <div class="tool-content">
+              <div class="tool-icon">{tool.icon}</div>
+              <h3>{tool.title}</h3>
+              <p>{tool.desc}</p>
+              <span class="tool-open">Open tool <span>→</span></span>
+            </div>
           </div>
-        </div>
-      </a>
-
-      <div class="tool">
-        <div class="tool-number">02</div>
-        <div class="tool-content">
-          <div class="tool-icon">⌁</div>
-          <h3>QR Code Generator</h3>
-          <p>Create downloadable QR codes for URLs, text and everyday sharing.</p>
-          <a href="#" class="tool-open" onclick="openTool('qr');return false;">Open tool <span>→</span></a>
-        </div>
-      </div>
-
-      <div class="tool">
-        <div class="tool-number">03</div>
-        <div class="tool-content">
-          <div class="tool-icon">◌</div>
-          <h3>Image Compressor</h3>
-          <p>Reduce image size directly in your browser before uploading or sharing.</p>
-          <a href="#" class="tool-open" onclick="openTool('compress');return false;">Open tool <span>→</span></a>
-        </div>
-      </div>
-
-      <div class="tool">
-        <div class="tool-number">04</div>
-        <div class="tool-content">
-          <div class="tool-icon">◫</div>
-          <h3>Image Converter</h3>
-          <p>Convert images between PNG, JPEG and WebP without installing anything.</p>
-          <a href="#" class="tool-open" onclick="openTool('convert');return false;">Open tool <span>→</span></a>
-        </div>
-      </div>
-
-      <div class="tool">
-        <div class="tool-number">05</div>
-        <div class="tool-content">
-          <div class="tool-icon">{ }</div>
-          <h3>JSON Formatter</h3>
-          <p>Format, validate and make messy JSON readable in one click.</p>
-          <a href="#" class="tool-open" onclick="openTool('json');return false;">Open tool <span>→</span></a>
-        </div>
-      </div>
-
-      <div class="tool">
-        <div class="tool-number">06</div>
-        <div class="tool-content">
-          <div class="tool-icon">✦</div>
-          <h3>Password Generator</h3>
-          <p>Generate strong passwords locally in your browser. Nothing needs to leave your device.</p>
-          <a href="#" class="tool-open" onclick="openTool('password');return false;">Open tool <span>→</span></a>
-        </div>
-      </div>
-
-      <div class="tool">
-        <div class="tool-number">07</div>
-        <div class="tool-content">
-          <div class="tool-icon">Aa</div>
-          <h3>Text Counter</h3>
-          <p>Count characters, words, lines and paragraphs instantly.</p>
-          <a href="#" class="tool-open" onclick="openTool('text');return false;">Open tool <span>→</span></a>
-        </div>
-      </div>
-
-      <div class="tool">
-        <div class="tool-number">08</div>
-        <div class="tool-content">
-          <div class="tool-icon">#</div>
-          <h3>UUID Generator</h3>
-          <p>Generate random UUIDs instantly for development, testing and data work.</p>
-          <a href="#" class="tool-open" onclick="openTool('uuid');return false;">Open tool <span>→</span></a>
-        </div>
-      </div>
-
-      <div class="tool">
-        <div class="tool-number">09</div>
-        <div class="tool-content">
-          <div class="tool-icon">↔</div>
-          <h3>Base64 Tool</h3>
-          <p>Encode and decode Base64 text quickly without sending your content to a server.</p>
-          <a href="#" class="tool-open" onclick="openTool('base64');return false;">Open tool <span>→</span></a>
-        </div>
-      </div>
-
-      <div class="tool">
-        <div class="tool-number">10</div>
-        <div class="tool-content">
-          <div class="tool-icon">↗</div>
-          <h3>URL Encoder</h3>
-          <p>Encode or decode URLs and query strings without leaving your browser.</p>
-          <a href="#" class="tool-open" onclick="openTool('url');return false;">Open tool <span>→</span></a>
-        </div>
-      </div>
-
-      <div class="tool">
-        <div class="tool-number">11</div>
-        <div class="tool-content">
-          <div class="tool-icon">◷</div>
-          <h3>Timestamp Converter</h3>
-          <p>Convert Unix timestamps to readable dates and generate timestamps from dates.</p>
-          <a href="#" class="tool-open" onclick="openTool('timestamp');return false;">Open tool <span>→</span></a>
-        </div>
-      </div>
-
-      <div class="tool">
-        <div class="tool-number">12</div>
-        <div class="tool-content">
-          <div class="tool-icon">#</div>
-          <h3>Hash Generator</h3>
-          <p>Generate SHA-256 hashes directly using your browser's Web Crypto API.</p>
-          <a href="#" class="tool-open" onclick="openTool('hash');return false;">Open tool <span>→</span></a>
-        </div>
-      </div>
-
-      <div class="tool">
-        <div class="tool-number">13</div>
-        <div class="tool-content">
-          <div class="tool-icon">◉</div>
-          <h3>Color Converter</h3>
-          <p>Convert HEX colors into RGB values and preview the result instantly.</p>
-          <a href="#" class="tool-open" onclick="openTool('color');return false;">Open tool <span>→</span></a>
-        </div>
-      </div>
+        </a>
+      ))}
     </div>
   </section>
 
@@ -232,21 +131,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <a href="#tools" class="cta-button">Explore all tools</a>
   </section>
 
-  <!-- ===================== TOOL MODAL ===================== -->
-  <div class="modal" id="toolModal">
-    <div class="modal-box">
-      <div class="modal-top">
-        <h2 id="modalTitle">Tool</h2>
-        <button class="close" onclick="closeTool()">×</button>
-      </div>
-      <div class="tool-ui" id="toolUI"></div>
-    </div>
-  </div>
-
   <script slot="body-end" is:inline>
-/* =========================================================
-   QR GENERATOR
-========================================================= */
 let qrInstance = null;
 
 function generateQR() {
@@ -276,321 +161,8 @@ function downloadQR() {
   link.click();
 }
 
-/* =========================================================
-   MODAL
-========================================================= */
-const modal = document.getElementById("toolModal");
-const modalTitle = document.getElementById("modalTitle");
-const toolUI = document.getElementById("toolUI");
-
-function openTool(tool) {
-  modal.classList.add("active");
-  const tools = {
-    qr: {
-      title: "QR Code Generator",
-      html: `
-        <input id="modalQRInput" placeholder="Enter a URL or text...">
-        <button class="action" onclick="modalQR()">Generate QR</button>
-        <div id="modalQR" style="margin-top:20px;text-align:center;"></div>
-      `
-    },
-    compress: {
-      title: "Image Compressor",
-      html: `
-        <div class="file-input"><input type="file" id="compressFile" accept="image/*"></div>
-        <label>Quality</label>
-        <input type="range" id="compressQuality" min="0.1" max="1" step="0.1" value="0.7">
-        <button class="action" onclick="compressImage()">Compress image</button>
-        <div id="compressResult" class="result-box"></div>
-      `
-    },
-    convert: {
-      title: "Image Converter",
-      html: `
-        <div class="file-input"><input type="file" id="convertFile" accept="image/*"></div>
-        <select id="convertFormat">
-          <option value="image/png">PNG</option>
-          <option value="image/jpeg">JPEG</option>
-          <option value="image/webp">WebP</option>
-        </select>
-        <button class="action" onclick="convertImage()">Convert image</button>
-        <div id="convertResult" class="result-box"></div>
-      `
-    },
-    json: {
-      title: "JSON Formatter",
-      html: `
-        <textarea id="jsonInput" placeholder='Paste JSON here...'></textarea>
-        <button class="action" onclick="formatJSON()">Format JSON</button>
-        <div id="jsonResult" class="result-box"></div>
-      `
-    },
-    password: {
-      title: "Password Generator",
-      html: `
-        <label>Length</label>
-        <input type="number" id="passwordLength" value="20" min="8" max="100">
-        <button class="action" onclick="generatePassword()">Generate password</button>
-        <div id="passwordResult" class="result-box"></div>
-      `
-    },
-    text: {
-      title: "Text Counter",
-      html: `
-        <textarea id="textInput" placeholder="Write or paste your text..." oninput="countText()"></textarea>
-        <div id="textResult" class="result-box">Characters: 0
-Words: 0
-Lines: 0</div>
-      `
-    },
-    uuid: {
-      title: "UUID Generator",
-      html: `
-        <button class="action" onclick="generateUUID()">Generate UUID</button>
-        <div id="uuidResult" class="result-box"></div>
-      `
-    },
-    base64: {
-      title: "Base64 Encoder / Decoder",
-      html: `
-        <textarea id="base64Input" placeholder="Enter text..."></textarea>
-        <button class="action" onclick="encodeBase64()">Encode</button>
-        <button class="action" onclick="decodeBase64()" style="margin-left:5px">Decode</button>
-        <div id="base64Result" class="result-box"></div>
-      `
-    },
-    url: {
-      title: "URL Encoder / Decoder",
-      html: `
-        <textarea id="urlInput" placeholder="Enter URL or text..."></textarea>
-        <button class="action" onclick="encodeURL()">Encode</button>
-        <button class="action" onclick="decodeURL()" style="margin-left:5px">Decode</button>
-        <div id="urlResult" class="result-box"></div>
-      `
-    },
-    timestamp: {
-      title: "Timestamp Converter",
-      html: `
-        <input id="timestampInput" placeholder="Unix timestamp...">
-        <button class="action" onclick="timestampToDate()">Timestamp → Date</button>
-        <button class="action" onclick="dateToTimestamp()" style="margin-left:5px">Current → Timestamp</button>
-        <div id="timestampResult" class="result-box"></div>
-      `
-    },
-    hash: {
-      title: "SHA-256 Hash Generator",
-      html: `
-        <textarea id="hashInput" placeholder="Enter text to hash..."></textarea>
-        <button class="action" onclick="generateHash()">Generate SHA-256</button>
-        <div id="hashResult" class="result-box"></div>
-      `
-    },
-    color: {
-      title: "Color Converter",
-      html: `
-        <input id="colorInput" value="#111111" placeholder="#000000">
-        <button class="action" onclick="convertColor()">Convert</button>
-        <div id="colorPreview" class="color-preview"></div>
-        <div id="colorResult" class="result-box"></div>
-      `
-    }
-  };
-  const selected = tools[tool];
-  modalTitle.textContent = selected.title;
-  toolUI.innerHTML = selected.html;
-}
-
-function closeTool() {
-  modal.classList.remove("active");
-}
-
-modal.addEventListener("click", function (event) {
-  if (event.target === modal) closeTool();
-});
-
-/* ---------------- MODAL QR ---------------- */
-function modalQR() {
-  const value = document.getElementById("modalQRInput").value.trim();
-  if (!value) return;
-  const target = document.getElementById("modalQR");
-  target.innerHTML = "";
-  new QRCode(target, { text: value, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.H });
-}
-
-/* ---------------- IMAGE COMPRESSOR ---------------- */
-function compressImage() {
-  const file = document.getElementById("compressFile").files[0];
-  if (!file) return;
-  const quality = Number(document.getElementById("compressQuality").value);
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    const img = new Image();
-    img.onload = function () {
-      const canvas = document.createElement("canvas");
-      canvas.width = img.width;
-      canvas.height = img.height;
-      canvas.getContext("2d").drawImage(img, 0, 0);
-      canvas.toBlob(function (blob) {
-        const url = URL.createObjectURL(blob);
-        document.getElementById("compressResult").innerHTML =
-          "Original: " + (file.size / 1024).toFixed(1) + " KB<br>" +
-          "Compressed: " + (blob.size / 1024).toFixed(1) + " KB<br><br>" +
-          '<a href="' + url + '" download="veloce-compressed.jpg" style="text-decoration:underline;">Download compressed image →</a>';
-      }, "image/jpeg", quality);
-    };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
-}
-
-/* ---------------- IMAGE CONVERTER ---------------- */
-function convertImage() {
-  const file = document.getElementById("convertFile").files[0];
-  if (!file) return;
-  const format = document.getElementById("convertFormat").value;
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    const img = new Image();
-    img.onload = function () {
-      const canvas = document.createElement("canvas");
-      canvas.width = img.width;
-      canvas.height = img.height;
-      canvas.getContext("2d").drawImage(img, 0, 0);
-      canvas.toBlob(function (blob) {
-        const url = URL.createObjectURL(blob);
-        const extension = format.split("/")[1];
-        document.getElementById("convertResult").innerHTML =
-          "Conversion complete.<br><br>" +
-          '<a href="' + url + '" download="veloce-converted.' + extension + '" style="text-decoration:underline;">Download ' + extension.toUpperCase() + ' →</a>';
-      }, format, .92);
-    };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
-}
-
-/* ---------------- JSON ---------------- */
-function formatJSON() {
-  const input = document.getElementById("jsonInput").value;
-  try {
-    const parsed = JSON.parse(input);
-    document.getElementById("jsonResult").textContent = JSON.stringify(parsed, null, 2);
-  } catch (error) {
-    document.getElementById("jsonResult").textContent = "Invalid JSON:\n" + error.message;
-  }
-}
-
-/* ---------------- PASSWORD ---------------- */
-function generatePassword() {
-  const length = Number(document.getElementById("passwordLength").value);
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+";
-  let password = "";
-  const random = new Uint32Array(length);
-  crypto.getRandomValues(random);
-  for (let i = 0; i < length; i++) password += chars[random[i] % chars.length];
-  document.getElementById("passwordResult").textContent = password;
-}
-
-/* ---------------- TEXT COUNTER ---------------- */
-function countText() {
-  const text = document.getElementById("textInput").value;
-  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
-  const lines = text ? text.split("\n").length : 0;
-  const paragraphs = text.trim() ? text.split(/\n\s*\n/).length : 0;
-  document.getElementById("textResult").textContent =
-    "Characters: " + text.length + "\n" +
-    "Characters without spaces: " + text.replace(/\s/g, "").length + "\n" +
-    "Words: " + words + "\n" +
-    "Lines: " + lines + "\n" +
-    "Paragraphs: " + paragraphs;
-}
-
-/* ---------------- UUID ---------------- */
-function generateUUID() {
-  let uuid;
-  if (crypto.randomUUID) uuid = crypto.randomUUID();
-  else {
-    uuid = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
-      const r = Math.random() * 16 | 0;
-      const v = c === "x" ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
-    });
-  }
-  document.getElementById("uuidResult").textContent = uuid;
-}
-
-/* ---------------- BASE64 ---------------- */
-function encodeBase64() {
-  const text = document.getElementById("base64Input").value;
-  document.getElementById("base64Result").textContent = btoa(unescape(encodeURIComponent(text)));
-}
-function decodeBase64() {
-  const text = document.getElementById("base64Input").value;
-  try {
-    document.getElementById("base64Result").textContent = decodeURIComponent(escape(atob(text)));
-  } catch {
-    document.getElementById("base64Result").textContent = "Invalid Base64.";
-  }
-}
-
-/* ---------------- URL ---------------- */
-function encodeURL() {
-  const text = document.getElementById("urlInput").value;
-  document.getElementById("urlResult").textContent = encodeURIComponent(text);
-}
-function decodeURL() {
-  const text = document.getElementById("urlInput").value;
-  try {
-    document.getElementById("urlResult").textContent = decodeURIComponent(text);
-  } catch {
-    document.getElementById("urlResult").textContent = "Invalid encoded URL.";
-  }
-}
-
-/* ---------------- TIMESTAMP ---------------- */
-function timestampToDate() {
-  const value = Number(document.getElementById("timestampInput").value);
-  if (!Number.isFinite(value)) {
-    document.getElementById("timestampResult").textContent = "Enter a valid Unix timestamp.";
-    return;
-  }
-  const date = new Date(value < 100000000000 ? value * 1000 : value);
-  document.getElementById("timestampResult").textContent = date.toString();
-}
-function dateToTimestamp() {
-  document.getElementById("timestampResult").textContent = Math.floor(Date.now() / 1000);
-}
-
-/* ---------------- SHA-256 ---------------- */
-async function generateHash() {
-  const text = document.getElementById("hashInput").value;
-  const data = new TextEncoder().encode(text);
-  const hash = await crypto.subtle.digest("SHA-256", data);
-  const result = Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, "0")).join("");
-  document.getElementById("hashResult").textContent = result;
-}
-
-/* ---------------- COLOR ---------------- */
-function convertColor() {
-  const hex = document.getElementById("colorInput").value.trim().replace("#", "");
-  if (!/^[0-9a-fA-F]{6}$/.test(hex)) {
-    document.getElementById("colorResult").textContent = "Enter a valid 6-character HEX color.";
-    return;
-  }
-  const r = parseInt(hex.substring(0, 2), 16);
-  const g = parseInt(hex.substring(2, 4), 16);
-  const b = parseInt(hex.substring(4, 6), 16);
-  document.getElementById("colorPreview").style.background = "#" + hex;
-  document.getElementById("colorResult").textContent =
-    "HEX: #" + hex.toUpperCase() + "\nRGB: rgb(" + r + ", " + g + ", " + b + ")";
-}
-
-/* ---------------- KEYBOARD ---------------- */
 document.getElementById("qrInput").addEventListener("keydown", function (e) {
   if (e.key === "Enter") generateQR();
-});
-document.addEventListener("keydown", function (e) {
-  if (e.key === "Escape") closeTool();
 });
   </script>
 </BaseLayout>

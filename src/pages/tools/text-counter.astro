@@ -1,0 +1,84 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const faqs = [
+  { q: 'How is reading time calculated?', a: 'We use an average adult reading speed of 200 words per minute. Actual reading time varies by content difficulty and reader, so treat this as a rough guide.' },
+  { q: 'Does this count match Twitter/X or other platforms exactly?', a: 'Character count here is a simple JavaScript string length count. Some platforms count emoji, URLs, or certain Unicode characters differently (for example, Twitter/X counts some characters as 2), so treat this as a close estimate rather than an exact match.' },
+  { q: 'Is my text saved anywhere?', a: 'No — counting happens live in your browser as you type, and nothing is sent anywhere or stored.' },
+];
+---
+<BaseLayout
+  title="Free Word & Character Counter | Veloce Tools"
+  description="Count characters, words, sentences, and paragraphs instantly, with estimated reading time. Free, no signup, updates live as you type."
+  jsonLd={[
+    { '@context': 'https://schema.org', '@type': 'SoftwareApplication', name: 'Text Counter', applicationCategory: 'BrowserApplication', operatingSystem: 'Any', offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' } },
+    { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
+  ]}
+>
+  <section class="section--tight">
+    <div class="tool-hero">
+      <span class="eyebrow">Free tool</span>
+      <h1>Word & Character Counter</h1>
+      <p>Paste or type your text and see live counts — characters, words, sentences, paragraphs, and reading time.</p>
+    </div>
+
+    <div class="field">
+      <label for="textInput">Your text</label>
+      <textarea id="textInput" placeholder="Write or paste your text..." style="min-height:220px;"></textarea>
+    </div>
+
+    <div class="tool-columns" style="margin-top:20px; grid-template-columns:repeat(3,1fr); gap:14px;">
+      <div class="compare-box"><div class="compare-label">Characters</div><div class="compare-value" id="charCount">0</div></div>
+      <div class="compare-box"><div class="compare-label">Words</div><div class="compare-value" id="wordCount">0</div></div>
+      <div class="compare-box"><div class="compare-label">Sentences</div><div class="compare-value" id="sentenceCount">0</div></div>
+      <div class="compare-box"><div class="compare-label">Paragraphs</div><div class="compare-value" id="paraCount">0</div></div>
+      <div class="compare-box"><div class="compare-label">No spaces</div><div class="compare-value" id="noSpaceCount">0</div></div>
+      <div class="compare-box"><div class="compare-label">Reading time</div><div class="compare-value" id="readTime">0 min</div></div>
+    </div>
+  </section>
+
+  <section class="section--tight prose">
+    <span class="eyebrow">Why it matters</span>
+    <h2>Character limits are everywhere.</h2>
+    <p>Meta descriptions, tweet drafts, SMS campaigns, bios — most platforms cap your text somewhere, and finding out mid-draft that you're 40 characters over is annoying. Live counts mean you write to the limit instead of discovering it after the fact.</p>
+  </section>
+
+  <section class="section--tight">
+    <span class="eyebrow">FAQ</span>
+    <h2 style="font-size:32px; letter-spacing:-1.5px; margin-bottom:20px;">Common questions</h2>
+    <div class="faq">
+      {faqs.map((f) => (
+        <details class="faq-item">
+          <summary>{f.q}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></summary>
+          <p>{f.a}</p>
+        </details>
+      ))}
+    </div>
+  </section>
+
+  <section class="cta">
+    <h2>Need the writing itself, not just the word count?</h2>
+    <p>Veloce Digital's content and SEO team writes copy that's built to rank.</p>
+    <a href="https://velocedigital.co/seo.html?utm_source=veloce_tools&utm_medium=text_counter" target="_blank" rel="noopener" class="cta-button">See SEO Services</a>
+  </section>
+
+  <script slot="body-end" is:inline>
+(function () {
+  var input = document.getElementById('textInput');
+  function update() {
+    var text = input.value;
+    var words = text.trim() ? text.trim().split(/\s+/).length : 0;
+    var sentences = text.trim() ? (text.match(/[.!?]+(\s|$)/g) || []).length : 0;
+    var paragraphs = text.trim() ? text.split(/\n\s*\n/).filter(function (p) { return p.trim(); }).length : 0;
+    document.getElementById('charCount').textContent = text.length;
+    document.getElementById('wordCount').textContent = words;
+    document.getElementById('sentenceCount').textContent = sentences;
+    document.getElementById('paraCount').textContent = paragraphs;
+    document.getElementById('noSpaceCount').textContent = text.replace(/\s/g, '').length;
+    document.getElementById('readTime').textContent = Math.max(1, Math.ceil(words / 200)) + ' min';
+  }
+  input.addEventListener('input', update);
+  update();
+})();
+  </script>
+</BaseLayout>

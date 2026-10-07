@@ -1,0 +1,95 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const faqs = [
+  { q: 'When do I need to URL-encode something?', a: 'Any time a value (like a search query, email address, or special character) is being placed into a URL\'s query string or path, where characters like spaces, &, ?, and # have special meaning and need escaping.' },
+  { q: 'What does %20 mean?', a: 'It\'s the URL-encoded form of a space character. Each encoded character is a % followed by its two-digit hex code.' },
+  { q: 'Is this the same as encodeURI vs encodeURIComponent?', a: 'This tool uses encodeURIComponent/decodeURIComponent, the stricter of the two, which escapes characters like &, =, and ? — exactly what you want when encoding a single query parameter value.' },
+];
+---
+<BaseLayout
+  title="Free URL Encoder & Decoder Online | Veloce Tools"
+  description="Encode or decode URLs and query strings instantly in your browser. Free, no signup."
+  jsonLd={[
+    { '@context': 'https://schema.org', '@type': 'SoftwareApplication', name: 'URL Encoder/Decoder', applicationCategory: 'BrowserApplication', operatingSystem: 'Any', offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' } },
+    { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
+  ]}
+>
+  <section class="section--tight">
+    <div class="tool-hero">
+      <span class="eyebrow">Free tool</span>
+      <h1>URL Encoder & Decoder</h1>
+      <p>Encode special characters for use in a URL, or decode an encoded URL back to readable text.</p>
+    </div>
+
+    <div class="segmented" style="max-width:300px;">
+      <label><input type="radio" name="mode" value="encode" checked><span>Encode</span></label>
+      <label><input type="radio" name="mode" value="decode"><span>Decode</span></label>
+    </div>
+
+    <div class="tool-columns" style="margin-top:10px;">
+      <div class="field" style="margin-bottom:0;">
+        <label for="input">Input</label>
+        <textarea id="input" placeholder="Paste a URL, query string, or text..." style="min-height:200px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:13px;"></textarea>
+      </div>
+      <div>
+        <p class="tool-label">Result</p>
+        <pre class="result-box" id="output" style="min-height:200px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:13px; overflow:auto; margin-top:0;"></pre>
+        <button type="button" class="copy-btn" id="copyBtn" style="margin-top:10px;">Copy result</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="section--tight prose">
+    <span class="eyebrow">Why it matters</span>
+    <h2>A raw ampersand in a query string breaks the next parameter.</h2>
+    <p>Building links by hand — tracking URLs, search queries, redirect targets — is one typo away from silently truncating or corrupting a parameter. Encoding properly means the receiving server reads exactly what you meant to send.</p>
+  </section>
+
+  <section class="section--tight">
+    <span class="eyebrow">FAQ</span>
+    <h2 style="font-size:32px; letter-spacing:-1.5px; margin-bottom:20px;">Common questions</h2>
+    <div class="faq">
+      {faqs.map((f) => (
+        <details class="faq-item">
+          <summary>{f.q}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></summary>
+          <p>{f.a}</p>
+        </details>
+      ))}
+    </div>
+  </section>
+
+  <section class="cta">
+    <h2>Setting up tracking links or redirects at scale?</h2>
+    <p>Veloce Digital sets up attribution tracking and campaign links properly, end to end.</p>
+    <a href="https://velocedigital.co/seo.html?utm_source=veloce_tools&utm_medium=url_encoder" target="_blank" rel="noopener" class="cta-button">See SEO Services</a>
+  </section>
+
+  <script slot="body-end" is:inline>
+(function () {
+  var input = document.getElementById('input');
+  var output = document.getElementById('output');
+  var copyBtn = document.getElementById('copyBtn');
+
+  function process() {
+    var text = input.value;
+    var mode = document.querySelector('input[name="mode"]:checked').value;
+    if (mode === 'encode') {
+      output.textContent = encodeURIComponent(text);
+    } else {
+      try { output.textContent = decodeURIComponent(text); }
+      catch { output.textContent = 'Invalid encoded input.'; }
+    }
+  }
+
+  input.addEventListener('input', process);
+  document.querySelectorAll('input[name="mode"]').forEach(function (el) { el.addEventListener('change', process); });
+  copyBtn.addEventListener('click', function () {
+    navigator.clipboard.writeText(output.textContent).then(function () {
+      copyBtn.classList.add('is-copied'); copyBtn.textContent = 'Copied!';
+      setTimeout(function () { copyBtn.classList.remove('is-copied'); copyBtn.textContent = 'Copy result'; }, 1500);
+    });
+  });
+})();
+  </script>
+</BaseLayout>

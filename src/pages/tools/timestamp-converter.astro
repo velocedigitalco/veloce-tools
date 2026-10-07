@@ -1,0 +1,102 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const faqs = [
+  { q: 'What is a Unix timestamp?', a: 'It\'s the number of seconds (or sometimes milliseconds) that have passed since January 1, 1970 UTC — a compact, timezone-independent way to represent a moment in time, used throughout databases, APIs, and logs.' },
+  { q: 'Why does my timestamp look wrong by a few hours?', a: 'The converted date is shown in your browser\'s local timezone. The underlying timestamp itself is always UTC-based and unambiguous — only the display differs by timezone.' },
+  { q: 'Seconds or milliseconds?', a: 'This tool auto-detects: a 10-digit number is treated as seconds (standard Unix time), a 13-digit number as milliseconds (common in JavaScript\'s Date.now()).' },
+];
+---
+<BaseLayout
+  title="Free Unix Timestamp Converter | Veloce Tools"
+  description="Convert Unix timestamps to readable dates and back, instantly. Free, no signup, shows the current timestamp live."
+  jsonLd={[
+    { '@context': 'https://schema.org', '@type': 'SoftwareApplication', name: 'Timestamp Converter', applicationCategory: 'BrowserApplication', operatingSystem: 'Any', offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' } },
+    { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
+  ]}
+>
+  <section class="section--tight">
+    <div class="tool-hero">
+      <span class="eyebrow">Free tool</span>
+      <h1>Unix Timestamp Converter</h1>
+      <p>Convert between Unix timestamps and readable dates, both directions.</p>
+    </div>
+
+    <div class="compare-box" style="max-width:420px; margin-bottom:30px;">
+      <div class="compare-label">Current Unix timestamp</div>
+      <div class="compare-value" id="liveTimestamp" style="font-size:24px;">—</div>
+    </div>
+
+    <div class="tool-columns">
+      <div>
+        <p class="tool-label">Timestamp → Date</p>
+        <div class="field">
+          <label for="tsInput">Unix timestamp</label>
+          <input id="tsInput" type="text" placeholder="e.g. 1735689600" />
+        </div>
+        <div class="result-box" id="tsResult">Enter a timestamp above.</div>
+      </div>
+      <div>
+        <p class="tool-label">Date → Timestamp</p>
+        <div class="field">
+          <label for="dateInput">Date & time (your local timezone)</label>
+          <input id="dateInput" type="datetime-local" />
+        </div>
+        <div class="result-box" id="dateResult">Pick a date above.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section--tight prose">
+    <span class="eyebrow">Why it matters</span>
+    <h2>Timezones are the quiet source of most date bugs.</h2>
+    <p>Storing dates as Unix timestamps (always UTC under the hood) sidesteps timezone ambiguity entirely — the conversion to a human-readable local time only happens at the point of display, not storage.</p>
+  </section>
+
+  <section class="section--tight">
+    <span class="eyebrow">FAQ</span>
+    <h2 style="font-size:32px; letter-spacing:-1.5px; margin-bottom:20px;">Common questions</h2>
+    <div class="faq">
+      {faqs.map((f) => (
+        <details class="faq-item">
+          <summary>{f.q}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></summary>
+          <p>{f.a}</p>
+        </details>
+      ))}
+    </div>
+  </section>
+
+  <section class="cta">
+    <h2>Need this handled right inside your app?</h2>
+    <p>Veloce Digital builds the real backend logic — timezones, scheduling, and all.</p>
+    <a href="https://velocedigital.co/website-development.html?utm_source=veloce_tools&utm_medium=timestamp_converter" target="_blank" rel="noopener" class="cta-button">See Development Services</a>
+  </section>
+
+  <script slot="body-end" is:inline>
+(function () {
+  var liveEl = document.getElementById('liveTimestamp');
+  setInterval(function () { liveEl.textContent = Math.floor(Date.now() / 1000); }, 1000);
+  liveEl.textContent = Math.floor(Date.now() / 1000);
+
+  var tsInput = document.getElementById('tsInput');
+  var tsResult = document.getElementById('tsResult');
+  tsInput.addEventListener('input', function () {
+    var raw = tsInput.value.trim();
+    if (!raw || !/^\d+$/.test(raw)) { tsResult.textContent = 'Enter a numeric Unix timestamp.'; return; }
+    var num = Number(raw);
+    var ms = raw.length >= 13 ? num : num * 1000;
+    var date = new Date(ms);
+    if (isNaN(date.getTime())) { tsResult.textContent = 'Invalid timestamp.'; return; }
+    tsResult.textContent = date.toString();
+  });
+
+  var dateInput = document.getElementById('dateInput');
+  var dateResult = document.getElementById('dateResult');
+  dateInput.addEventListener('input', function () {
+    if (!dateInput.value) { dateResult.textContent = 'Pick a date above.'; return; }
+    var date = new Date(dateInput.value);
+    dateResult.textContent = Math.floor(date.getTime() / 1000) + '  (seconds)\n' + date.getTime() + '  (milliseconds)';
+  });
+})();
+  </script>
+</BaseLayout>

@@ -1,0 +1,141 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const faqs = [
+  { q: 'What\'s the difference between PNG, JPEG, and WebP?', a: 'PNG supports transparency and is best for logos or graphics with sharp edges. JPEG is best for photos and doesn\'t support transparency. WebP usually gives the smallest file size of the three while supporting transparency too, but a few very old browsers don\'t support it.' },
+  { q: 'Does converting lose quality?', a: 'Converting to JPEG or WebP uses lossy compression, so there\'s a small quality trade-off (usually invisible at 90%+ quality). Converting to PNG is lossless, so no quality is lost, but file size may increase.' },
+  { q: 'Is my image uploaded anywhere?', a: 'No — the conversion happens in your browser using the Canvas API. Nothing is sent to a server.' },
+];
+---
+<BaseLayout
+  title="Free Image Converter — PNG, JPEG, WebP | Veloce Tools"
+  description="Convert images between PNG, JPEG, and WebP directly in your browser. Free, no upload, no signup."
+  jsonLd={[
+    { '@context': 'https://schema.org', '@type': 'SoftwareApplication', name: 'Image Converter', applicationCategory: 'BrowserApplication', operatingSystem: 'Any', offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' } },
+    { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
+  ]}
+>
+  <section class="section--tight">
+    <div class="tool-hero">
+      <span class="eyebrow">Free tool</span>
+      <h1>Image Converter</h1>
+      <p>Convert between PNG, JPEG, and WebP — processed locally in your browser, nothing uploaded.</p>
+    </div>
+
+    <div class="tool-columns">
+      <div>
+        <label class="dropzone" id="dropzone">
+          <input type="file" id="convertFile" accept="image/*" />
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 16V4m0 0 5 5m-5-5-5 5M5 20h14" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="dz-title">Click to choose an image, or drag one here</span>
+          <span class="dz-sub">Any common image format</span>
+          <img id="dz-preview" class="dropzone-preview" />
+        </label>
+
+        <p class="tool-label">Convert to</p>
+        <div class="segmented">
+          <label><input type="radio" name="format" value="image/png"><span>PNG</span></label>
+          <label><input type="radio" name="format" value="image/jpeg" checked><span>JPEG</span></label>
+          <label><input type="radio" name="format" value="image/webp"><span>WebP</span></label>
+        </div>
+      </div>
+
+      <div class="tool-columns__sticky">
+        <p class="tool-label">Result</p>
+        <div id="convertResult" class="result-box" style="display:none;"></div>
+        <button type="button" class="primary-button" id="downloadBtn" style="width:100%; border:none; margin-top:14px; display:none; text-align:center;">Download converted image</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="section--tight prose">
+    <span class="eyebrow">Why it matters</span>
+    <h2>The right format saves bandwidth without anyone noticing.</h2>
+    <p>Serving a photo as PNG when it should be JPEG (or WebP) routinely triples file size for no visual benefit. Matching format to content — WebP or JPEG for photos, PNG only when you genuinely need transparency or sharp line art — is one of the easiest wins for page speed.</p>
+  </section>
+
+  <section class="section--tight">
+    <span class="eyebrow">FAQ</span>
+    <h2 style="font-size:32px; letter-spacing:-1.5px; margin-bottom:20px;">Common questions</h2>
+    <div class="faq">
+      {faqs.map((f) => (
+        <details class="faq-item">
+          <summary>{f.q}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></summary>
+          <p>{f.a}</p>
+        </details>
+      ))}
+    </div>
+  </section>
+
+  <section class="cta">
+    <h2>Want your whole site optimized, not just one image?</h2>
+    <p>Veloce Digital's website care plans handle image optimization, caching, and speed as an ongoing service.</p>
+    <a href="https://velocedigital.co/website-care-plans.html?utm_source=veloce_tools&utm_medium=image_converter" target="_blank" rel="noopener" class="cta-button">See Care Plans</a>
+  </section>
+
+  <script slot="body-end" is:inline>
+(function () {
+  var fileInput = document.getElementById('convertFile');
+  var dropzone = document.getElementById('dropzone');
+  var dzPreview = document.getElementById('dz-preview');
+  var resultBox = document.getElementById('convertResult');
+  var downloadBtn = document.getElementById('downloadBtn');
+  var currentFile = null;
+  var currentUrl = null;
+
+  function currentFormat() {
+    var el = document.querySelector('input[name="format"]:checked');
+    return el ? el.value : 'image/jpeg';
+  }
+
+  fileInput.addEventListener('change', function () {
+    currentFile = fileInput.files[0];
+    if (currentFile) {
+      dzPreview.src = URL.createObjectURL(currentFile);
+      dzPreview.style.display = 'block';
+      process();
+    }
+  });
+  document.querySelectorAll('input[name="format"]').forEach(function (el) {
+    el.addEventListener('change', function () { if (currentFile) process(); });
+  });
+  ['dragover', 'dragleave', 'drop'].forEach(function (evt) {
+    dropzone.addEventListener(evt, function (e) {
+      e.preventDefault();
+      dropzone.classList.toggle('is-dragover', evt === 'dragover');
+    });
+  });
+
+  function process() {
+    var format = currentFormat();
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      var img = new Image();
+      img.onload = function () {
+        var canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        canvas.getContext('2d').drawImage(img, 0, 0);
+        canvas.toBlob(function (blob) {
+          if (currentUrl) URL.revokeObjectURL(currentUrl);
+          currentUrl = URL.createObjectURL(blob);
+          var ext = format.split('/')[1];
+          resultBox.textContent = 'Converted to ' + ext.toUpperCase() + ' — ' + (blob.size / 1024).toFixed(0) + ' KB';
+          resultBox.style.display = 'block';
+          downloadBtn.style.display = 'block';
+          downloadBtn.textContent = 'Download ' + ext.toUpperCase();
+          downloadBtn.onclick = function () {
+            var link = document.createElement('a');
+            link.href = currentUrl;
+            link.download = 'veloce-converted.' + ext;
+            link.click();
+          };
+        }, format, 0.92);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(currentFile);
+  }
+})();
+  </script>
+</BaseLayout>

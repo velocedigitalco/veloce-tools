@@ -1,0 +1,148 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const faqs = [
+  { q: 'Does this upload my image anywhere?', a: 'No. Compression happens entirely in your browser using the Canvas API. Your image never leaves your device.' },
+  { q: 'What quality setting should I use?', a: '0.7–0.8 is a good default — a large reduction in file size with barely visible quality loss. Drop to 0.5–0.6 for thumbnails or when file size matters more than sharpness.' },
+  { q: 'Why did my PNG come out bigger or look different?', a: 'This tool compresses to JPEG, which doesn\'t support transparency — if your source had a transparent background, it\'ll be filled in. For transparent images, use the Image Converter to export as WebP instead.' },
+];
+---
+<BaseLayout
+  title="Free Image Compressor — Reduce File Size in Your Browser | Veloce Tools"
+  description="Compress JPEG and PNG images right in your browser. Adjust quality, see the before/after size instantly, and download — free, no upload, no signup."
+  jsonLd={[
+    { '@context': 'https://schema.org', '@type': 'SoftwareApplication', name: 'Image Compressor', applicationCategory: 'BrowserApplication', operatingSystem: 'Any', offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' } },
+    { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
+  ]}
+>
+  <section class="section--tight">
+    <div class="tool-hero">
+      <span class="eyebrow">Free tool</span>
+      <h1>Image Compressor</h1>
+      <p>Drop in an image, adjust quality, and download a smaller file — processed locally, nothing is uploaded.</p>
+    </div>
+
+    <div class="tool-columns">
+      <div>
+        <label class="dropzone" id="dropzone">
+          <input type="file" id="compressFile" accept="image/*" />
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 16V4m0 0 5 5m-5-5-5 5M5 20h14" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="dz-title">Click to choose an image, or drag one here</span>
+          <span class="dz-sub">JPEG, PNG, or WebP</span>
+          <img id="dz-preview" class="dropzone-preview" />
+        </label>
+
+        <div class="slider-row">
+          <div class="slider-top"><span>Quality</span><strong id="qualityValue">0.7</strong></div>
+          <input type="range" id="compressQuality" min="0.1" max="1" step="0.05" value="0.7" />
+        </div>
+      </div>
+
+      <div class="tool-columns__sticky">
+        <p class="tool-label">Result</p>
+        <div class="compare-row" id="compareRow" style="display:none;">
+          <div class="compare-box"><div class="compare-label">Original</div><div class="compare-value" id="originalSize">—</div></div>
+          <div class="compare-box is-win"><div class="compare-value" id="compressedSize">—</div><div class="compare-label" style="margin-top:6px;">Compressed</div></div>
+        </div>
+        <div id="compressResult" class="result-box" style="display:none;"></div>
+        <button type="button" class="primary-button" id="downloadBtn" style="width:100%; border:none; margin-top:14px; display:none; text-align:center;">Download compressed image</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="section--tight prose">
+    <span class="eyebrow">Why it matters</span>
+    <h2>Page speed depends on image weight more than anything else.</h2>
+    <p>Images are usually the single biggest contributor to page load time. A photo straight off a phone camera can be 4–8MB — compressing it to a web-appropriate size often cuts that by 80–90% with no visible quality loss, which means faster pages, lower bounce rates, and better Core Web Vitals scores.</p>
+  </section>
+
+  <section class="section--tight">
+    <span class="eyebrow">FAQ</span>
+    <h2 style="font-size:32px; letter-spacing:-1.5px; margin-bottom:20px;">Common questions</h2>
+    <div class="faq">
+      {faqs.map((f) => (
+        <details class="faq-item">
+          <summary>{f.q}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></summary>
+          <p>{f.a}</p>
+        </details>
+      ))}
+    </div>
+  </section>
+
+  <section class="cta">
+    <h2>Want your whole site optimized, not just one image?</h2>
+    <p>Veloce Digital's website care plans handle image optimization, caching, and speed as an ongoing service.</p>
+    <a href="https://velocedigital.co/website-care-plans.html?utm_source=veloce_tools&utm_medium=image_compressor" target="_blank" rel="noopener" class="cta-button">See Care Plans</a>
+  </section>
+
+  <script slot="body-end" is:inline>
+(function () {
+  var fileInput = document.getElementById('compressFile');
+  var dropzone = document.getElementById('dropzone');
+  var dzPreview = document.getElementById('dz-preview');
+  var qualityInput = document.getElementById('compressQuality');
+  var qualityValue = document.getElementById('qualityValue');
+  var compareRow = document.getElementById('compareRow');
+  var originalSize = document.getElementById('originalSize');
+  var compressedSize = document.getElementById('compressedSize');
+  var resultBox = document.getElementById('compressResult');
+  var downloadBtn = document.getElementById('downloadBtn');
+  var currentFile = null;
+  var currentUrl = null;
+
+  qualityInput.addEventListener('input', function () {
+    qualityValue.textContent = qualityInput.value;
+    if (currentFile) process();
+  });
+
+  fileInput.addEventListener('change', function () {
+    currentFile = fileInput.files[0];
+    if (currentFile) {
+      dzPreview.src = URL.createObjectURL(currentFile);
+      dzPreview.style.display = 'block';
+      process();
+    }
+  });
+
+  ['dragover', 'dragleave', 'drop'].forEach(function (evt) {
+    dropzone.addEventListener(evt, function (e) {
+      e.preventDefault();
+      dropzone.classList.toggle('is-dragover', evt === 'dragover');
+    });
+  });
+
+  function process() {
+    var quality = Number(qualityInput.value);
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      var img = new Image();
+      img.onload = function () {
+        var canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        canvas.getContext('2d').drawImage(img, 0, 0);
+        canvas.toBlob(function (blob) {
+          if (currentUrl) URL.revokeObjectURL(currentUrl);
+          currentUrl = URL.createObjectURL(blob);
+          originalSize.textContent = (currentFile.size / 1024).toFixed(0) + ' KB';
+          compressedSize.textContent = (blob.size / 1024).toFixed(0) + ' KB';
+          var reduction = Math.round((1 - blob.size / currentFile.size) * 100);
+          resultBox.textContent = reduction > 0 ? reduction + '% smaller' : 'No significant reduction at this quality';
+          compareRow.style.display = 'grid';
+          resultBox.style.display = 'block';
+          downloadBtn.style.display = 'block';
+          downloadBtn.onclick = function () {
+            var link = document.createElement('a');
+            link.href = currentUrl;
+            link.download = 'veloce-compressed.jpg';
+            link.click();
+          };
+        }, 'image/jpeg', quality);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(currentFile);
+  }
+})();
+  </script>
+</BaseLayout>

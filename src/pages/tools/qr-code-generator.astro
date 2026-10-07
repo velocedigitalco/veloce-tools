@@ -1,0 +1,148 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const faqs = [
+  { q: 'Will this QR code expire?', a: 'No. The QR code is generated entirely in your browser and encodes your text or link directly — there\'s no server tracking it, so it never expires or stops working.' },
+  { q: 'What size should I use for printing?', a: 'For print (flyers, posters, packaging), use the 400px option or larger and keep the code at least 2.5cm / 1 inch wide so phone cameras can focus on it easily.' },
+  { q: 'Why isn\'t my QR code scanning?', a: 'Low contrast between the code and background is the most common cause. Keep the foreground dark and background light, and leave a white margin (quiet zone) around the code when placing it in a design.' },
+];
+---
+<BaseLayout
+  title="Free QR Code Generator — No Signup, Instant Download | Veloce Tools"
+  description="Turn any link or text into a downloadable QR code in seconds. Choose size and colors, then download as PNG — free, no signup, works entirely in your browser."
+  jsonLd={[
+    { '@context': 'https://schema.org', '@type': 'SoftwareApplication', name: 'QR Code Generator', applicationCategory: 'BrowserApplication', operatingSystem: 'Any', offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' } },
+    { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
+  ]}
+>
+  <script slot="head" src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
+  <section class="section--tight">
+    <div class="tool-hero">
+      <span class="eyebrow">Free tool</span>
+      <h1>QR Code Generator</h1>
+      <p>Paste a link or text, pick a size and color, and download a clean PNG — generated entirely in your browser.</p>
+    </div>
+
+    <div class="tool-columns">
+      <div>
+        <div class="field">
+          <label for="qr-text">Link or text</label>
+          <textarea id="qr-text" placeholder="https://example.com or any text..." style="min-height:90px;"></textarea>
+        </div>
+
+        <p class="tool-label">Size</p>
+        <div class="segmented">
+          <label><input type="radio" name="qr-size" value="150"><span>150px</span></label>
+          <label><input type="radio" name="qr-size" value="250" checked><span>250px</span></label>
+          <label><input type="radio" name="qr-size" value="400"><span>400px</span></label>
+          <label><input type="radio" name="qr-size" value="600"><span>600px</span></label>
+        </div>
+
+        <p class="tool-label">Error correction</p>
+        <div class="segmented">
+          <label><input type="radio" name="qr-level" value="L"><span>Low</span></label>
+          <label><input type="radio" name="qr-level" value="M"><span>Medium</span></label>
+          <label><input type="radio" name="qr-level" value="Q" checked><span>Quartile</span></label>
+          <label><input type="radio" name="qr-level" value="H"><span>High</span></label>
+        </div>
+
+        <div class="btn-row">
+          <div class="field" style="margin-bottom:0;">
+            <label for="qr-fg">Foreground</label>
+            <input id="qr-fg" type="color" value="#111111" style="height:46px; padding:4px;" />
+          </div>
+          <div class="field" style="margin-bottom:0;">
+            <label for="qr-bg">Background</label>
+            <input id="qr-bg" type="color" value="#ffffff" style="height:46px; padding:4px;" />
+          </div>
+        </div>
+      </div>
+
+      <div class="tool-columns__sticky">
+        <p class="tool-label">Preview</p>
+        <div style="background:#fff; border:1px solid #e3e3e3; border-radius:16px; padding:30px; display:flex; justify-content:center;">
+          <div id="qrcode"></div>
+        </div>
+        <button type="button" class="primary-button" id="qr-download" style="width:100%; border:none; margin-top:16px; text-align:center;">Download PNG</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="section--tight prose">
+    <span class="eyebrow">Why it matters</span>
+    <h2>A QR code is a bridge from print to screen.</h2>
+    <p>Menus, business cards, packaging, posters — anywhere someone sees your business offline, a QR code gets them to your site, a form, or a WhatsApp chat in one scan. Higher error correction levels keep the code scannable even if it gets slightly scratched, scuffed, or printed small, at the cost of a denser-looking pattern.</p>
+  </section>
+
+  <section class="section--tight">
+    <span class="eyebrow">FAQ</span>
+    <h2 style="font-size:32px; letter-spacing:-1.5px; margin-bottom:20px;">Common questions</h2>
+    <div class="faq">
+      {faqs.map((f) => (
+        <details class="faq-item">
+          <summary>{f.q}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></summary>
+          <p>{f.a}</p>
+        </details>
+      ))}
+    </div>
+  </section>
+
+  <section class="cta">
+    <h2>Need a whole website, not just a QR code?</h2>
+    <p>Veloce Digital designs and builds sites that the QR code actually lands on.</p>
+    <a href="https://velocedigital.co/website-development.html?utm_source=veloce_tools&utm_medium=qr_generator" target="_blank" rel="noopener" class="cta-button">See Web Design Services</a>
+  </section>
+
+  <script slot="body-end" is:inline>
+(function () {
+  var textEl = document.getElementById('qr-text');
+  var fgEl = document.getElementById('qr-fg');
+  var bgEl = document.getElementById('qr-bg');
+  var container = document.getElementById('qrcode');
+  var downloadBtn = document.getElementById('qr-download');
+  var qr = null;
+
+  function currentSize() {
+    var el = document.querySelector('input[name="qr-size"]:checked');
+    return el ? parseInt(el.value, 10) : 250;
+  }
+  function currentLevel() {
+    var el = document.querySelector('input[name="qr-level"]:checked');
+    var map = { L: QRCode.CorrectLevel.L, M: QRCode.CorrectLevel.M, Q: QRCode.CorrectLevel.Q, H: QRCode.CorrectLevel.H };
+    return el ? map[el.value] : QRCode.CorrectLevel.Q;
+  }
+
+  function render() {
+    var text = textEl.value.trim() || 'https://velocedigital.co';
+    container.innerHTML = '';
+    qr = new QRCode(container, {
+      text: text,
+      width: currentSize(),
+      height: currentSize(),
+      colorDark: fgEl.value,
+      colorLight: bgEl.value,
+      correctLevel: currentLevel()
+    });
+  }
+
+  [textEl, fgEl, bgEl].forEach(function (el) { el.addEventListener('input', render); });
+  document.querySelectorAll('input[name="qr-size"], input[name="qr-level"]').forEach(function (el) {
+    el.addEventListener('change', render);
+  });
+
+  downloadBtn.addEventListener('click', function () {
+    var canvas = container.querySelector('canvas');
+    var img = container.querySelector('img');
+    var url = canvas ? canvas.toDataURL('image/png') : (img ? img.src : '');
+    if (!url) return;
+    var link = document.createElement('a');
+    link.href = url;
+    link.download = 'veloce-qr.png';
+    link.click();
+  });
+
+  render();
+})();
+  </script>
+</BaseLayout>

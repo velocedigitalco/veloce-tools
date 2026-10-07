@@ -1,0 +1,108 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const faqs = [
+  { q: 'What is Base64 used for?', a: 'Base64 turns binary or text data into plain ASCII characters, commonly used to embed images in CSS/HTML (data URIs), encode email attachments, or pass binary data through systems that only handle text.' },
+  { q: 'Is Base64 encryption?', a: 'No — Base64 is encoding, not encryption. Anyone can decode it instantly with no key. Never use it to "hide" sensitive data like passwords.' },
+  { q: 'Why did decoding fail?', a: 'The input isn\'t valid Base64 — usually caused by stray line breaks, missing padding (= characters), or characters outside the Base64 alphabet (A–Z, a–z, 0–9, +, /).' },
+];
+---
+<BaseLayout
+  title="Free Base64 Encoder & Decoder | Veloce Tools"
+  description="Encode text to Base64 or decode Base64 back to text, instantly in your browser. Free, no signup, nothing sent to a server."
+  jsonLd={[
+    { '@context': 'https://schema.org', '@type': 'SoftwareApplication', name: 'Base64 Encoder/Decoder', applicationCategory: 'BrowserApplication', operatingSystem: 'Any', offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' } },
+    { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
+  ]}
+>
+  <section class="section--tight">
+    <div class="tool-hero">
+      <span class="eyebrow">Free tool</span>
+      <h1>Base64 Encoder & Decoder</h1>
+      <p>Switch between text and Base64 instantly — nothing leaves your browser.</p>
+    </div>
+
+    <div class="segmented" style="max-width:300px;">
+      <label><input type="radio" name="mode" value="encode" checked><span>Encode</span></label>
+      <label><input type="radio" name="mode" value="decode"><span>Decode</span></label>
+    </div>
+
+    <div class="tool-columns" style="margin-top:10px;">
+      <div class="field" style="margin-bottom:0;">
+        <label for="input" id="inputLabel">Text</label>
+        <textarea id="input" placeholder="Type or paste here..." style="min-height:220px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:13px;"></textarea>
+      </div>
+      <div>
+        <p class="tool-label" id="outputLabel">Base64</p>
+        <pre class="result-box" id="output" style="min-height:220px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:13px; overflow:auto; margin-top:0;"></pre>
+        <button type="button" class="copy-btn" id="copyBtn" style="margin-top:10px;">Copy result</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="section--tight prose">
+    <span class="eyebrow">Why it matters</span>
+    <h2>Base64 shows up everywhere once you're working with APIs.</h2>
+    <p>Auth tokens, embedded images, binary file uploads in JSON payloads — Base64 is the quiet workhorse format that makes binary data play nicely with text-based systems. Being able to quickly eyeball what's actually inside an encoded string saves real debugging time.</p>
+  </section>
+
+  <section class="section--tight">
+    <span class="eyebrow">FAQ</span>
+    <h2 style="font-size:32px; letter-spacing:-1.5px; margin-bottom:20px;">Common questions</h2>
+    <div class="faq">
+      {faqs.map((f) => (
+        <details class="faq-item">
+          <summary>{f.q}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></summary>
+          <p>{f.a}</p>
+        </details>
+      ))}
+    </div>
+  </section>
+
+  <section class="cta">
+    <h2>Need an actual API built, not just encoded?</h2>
+    <p>Veloce Digital builds the backends these tools only simulate a corner of.</p>
+    <a href="https://velocedigital.co/website-development.html?utm_source=veloce_tools&utm_medium=base64_tool" target="_blank" rel="noopener" class="cta-button">See Development Services</a>
+  </section>
+
+  <script slot="body-end" is:inline>
+(function () {
+  var input = document.getElementById('input');
+  var output = document.getElementById('output');
+  var inputLabel = document.getElementById('inputLabel');
+  var outputLabel = document.getElementById('outputLabel');
+  var copyBtn = document.getElementById('copyBtn');
+
+  function mode() {
+    return document.querySelector('input[name="mode"]:checked').value;
+  }
+
+  function process() {
+    var text = input.value;
+    if (mode() === 'encode') {
+      try { output.textContent = btoa(unescape(encodeURIComponent(text))); }
+      catch { output.textContent = 'Could not encode this input.'; }
+    } else {
+      try { output.textContent = decodeURIComponent(escape(atob(text))); }
+      catch { output.textContent = 'Invalid Base64 input.'; }
+    }
+  }
+
+  function updateLabels() {
+    if (mode() === 'encode') { inputLabel.textContent = 'Text'; outputLabel.textContent = 'Base64'; }
+    else { inputLabel.textContent = 'Base64'; outputLabel.textContent = 'Text'; }
+  }
+
+  input.addEventListener('input', process);
+  document.querySelectorAll('input[name="mode"]').forEach(function (el) {
+    el.addEventListener('change', function () { updateLabels(); process(); });
+  });
+  copyBtn.addEventListener('click', function () {
+    navigator.clipboard.writeText(output.textContent).then(function () {
+      copyBtn.classList.add('is-copied'); copyBtn.textContent = 'Copied!';
+      setTimeout(function () { copyBtn.classList.remove('is-copied'); copyBtn.textContent = 'Copy result'; }, 1500);
+    });
+  });
+})();
+  </script>
+</BaseLayout>
