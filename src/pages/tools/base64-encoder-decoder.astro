@@ -9,33 +9,86 @@ const faqs = [
 ---
 <BaseLayout
   title="Free Base64 Encoder & Decoder | Veloce Tools"
-  description="Encode text to Base64 or decode Base64 back to text, instantly in your browser. Free, no signup, nothing sent to a server."
+  description="Encode and decode Base64 for text, images and files. URL-safe mode, data URIs, image preview. Free, runs entirely in your browser."
   jsonLd={[
     { '@context': 'https://schema.org', '@type': 'SoftwareApplication', name: 'Base64 Encoder/Decoder', applicationCategory: 'BrowserApplication', operatingSystem: 'Any', offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' } },
     { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
   ]}
 >
   <section class="section--tight">
-    <div class="tool-hero">
+<div class="tool-hero">
       <span class="eyebrow">Free tool</span>
-      <h1>Base64 Encoder & Decoder</h1>
-      <p>Switch between text and Base64 instantly — nothing leaves your browser.</p>
+      <h1>Base64 Encoder &amp; Decoder</h1>
+      <p>Encode or decode text and files. URL-safe mode, line wrapping, image previews and ready-to-paste data URIs. Nothing leaves your browser.</p>
     </div>
 
-    <div class="segmented" style="max-width:300px;">
-      <label><input type="radio" name="mode" value="encode" checked><span>Encode</span></label>
-      <label><input type="radio" name="mode" value="decode"><span>Decode</span></label>
+    <div class="tabs" id="mainTabs">
+      <button type="button" class="active" data-t="text">Text</button>
+      <button type="button" data-t="file">File &amp; image</button>
     </div>
 
-    <div class="tool-columns" style="margin-top:10px;">
-      <div class="field" style="margin-bottom:0;">
-        <label for="input" id="inputLabel">Text</label>
-        <textarea id="input" placeholder="Type or paste here..." style="min-height:220px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:13px;"></textarea>
+    <div id="mainPanes">
+      <div data-pane="text">
+        <div class="segmented" style="max-width:300px;">
+          <label><input type="radio" name="mode" value="encode" checked><span>Encode</span></label>
+          <label><input type="radio" name="mode" value="decode"><span>Decode</span></label>
+        </div>
+        <div class="toggle-group">
+          <label class="toggle-chip"><input type="checkbox" id="oUrl"><span>URL-safe (- and _)</span></label>
+          <label class="toggle-chip"><input type="checkbox" id="oPad"><span>Remove = padding</span></label>
+          <label class="toggle-chip"><input type="checkbox" id="oWrap"><span>Wrap at 76 chars</span></label>
+        </div>
+        <div class="tool-columns" style="margin-top:0;">
+          <div class="field" style="margin-bottom:0;">
+            <label for="in" id="inLbl">Text to encode</label>
+            <textarea id="in" spellcheck="false" placeholder="Type or paste here..." style="min-height:240px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;"></textarea>
+          </div>
+          <div>
+            <p class="tool-label" id="outLbl">Base64 result</p>
+            <div class="out mono" id="out" style="min-height:240px;"></div>
+            <div class="actions">
+              <button type="button" class="mini dark" data-copy="#out">Copy result</button>
+              <button type="button" class="mini" id="swap">Swap input and output</button>
+              <button type="button" class="mini" id="clr">Clear</button>
+            </div>
+            <p class="hint" id="info"></p>
+          </div>
+        </div>
       </div>
-      <div>
-        <p class="tool-label" id="outputLabel">Base64</p>
-        <pre class="result-box" id="output" style="min-height:220px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:13px; overflow:auto; margin-top:0;"></pre>
-        <button type="button" class="copy-btn" id="copyBtn" style="margin-top:10px;">Copy result</button>
+
+      <div data-pane="file" class="hidden">
+        <div class="tool-columns" style="margin-top:0;">
+          <div>
+            <p class="tool-label">File to Base64</p>
+            <label class="dropzone" id="dz">
+              <input type="file" />
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 16V4m0 0 5 5m-5-5-5 5M5 20h14" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span class="dz-title">Drop any file here, or click to browse</span>
+              <span class="dz-sub">Images, PDFs, fonts, anything up to 10 MB</span>
+            </label>
+            <img id="prev" class="dropzone-preview" alt="Preview" style="display:none;" />
+            <div id="fileOut" class="hidden">
+              <p class="hint" id="fileInfo"></p>
+              <div class="actions">
+                <button type="button" class="mini dark" id="cB64">Copy Base64</button>
+                <button type="button" class="mini" id="cUri">Copy data URI</button>
+                <button type="button" class="mini" id="cCss">Copy as CSS</button>
+                <button type="button" class="mini" id="cImg">Copy as img tag</button>
+              </div>
+              <div class="out mono" id="filePreviewText" style="max-height:160px;overflow:auto;"></div>
+            </div>
+          </div>
+          <div>
+            <p class="tool-label">Base64 to file</p>
+            <div class="field">
+              <textarea id="b2f" spellcheck="false" placeholder="Paste Base64 or a data URI (data:image/png;base64,...)" style="min-height:140px;font-family:ui-monospace,Menlo,monospace;font-size:12px;"></textarea>
+            </div>
+            <div class="field"><label for="fname">File name</label><input id="fname" type="text" value="decoded" /></div>
+            <img id="prev2" class="dropzone-preview" alt="Decoded preview" style="display:none;" />
+            <div class="out" id="b2fInfo" style="color:#999;margin-bottom:10px;">The detected file type appears here.</div>
+            <button type="button" class="primary-button" id="b2fBtn" style="border:none;" disabled>Download file</button>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -67,42 +120,95 @@ const faqs = [
 
   <script slot="body-end" is:inline>
 (function () {
-  var input = document.getElementById('input');
-  var output = document.getElementById('output');
-  var inputLabel = document.getElementById('inputLabel');
-  var outputLabel = document.getElementById('outputLabel');
-  var copyBtn = document.getElementById('copyBtn');
+  var $ = function (id) { return document.getElementById(id); };
+  var fileB64 = '', fileMime = '', decodedBlob = null, prev2Url = null;
 
-  function mode() {
-    return document.querySelector('input[name="mode"]:checked').value;
+  function toB64(bytes, o) {
+    var bin = ''; for (var i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    var s = btoa(bin);
+    if (o.url) s = s.replace(/\+/g, '-').replace(/\//g, '_');
+    if (o.nopad) s = s.replace(/=+$/, '');
+    if (o.wrap) s = s.replace(/(.{76})/g, '$1\n').trim();
+    return s;
   }
+  function fromB64(s) {
+    s = s.replace(/^data:[^,]*,/, '').replace(/\s+/g, '').replace(/-/g, '+').replace(/_/g, '/');
+    while (s.length % 4) s += '=';
+    var bin = atob(s), b = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i); return b;
+  }
+  function mode() { return document.querySelector('input[name="mode"]:checked').value; }
 
-  function process() {
-    var text = input.value;
-    if (mode() === 'encode') {
-      try { output.textContent = btoa(unescape(encodeURIComponent(text))); }
-      catch { output.textContent = 'Could not encode this input.'; }
-    } else {
-      try { output.textContent = decodeURIComponent(escape(atob(text))); }
-      catch { output.textContent = 'Invalid Base64 input.'; }
+  function run() {
+    var s = $('in').value, o = $('out'), m = mode();
+    $('inLbl').textContent = m === 'encode' ? 'Text to encode' : 'Base64 to decode';
+    $('outLbl').textContent = m === 'encode' ? 'Base64 result' : 'Decoded text';
+    $('in').placeholder = m === 'encode' ? 'Type or paste text here...' : 'Paste Base64 here...';
+    o.className = 'out mono'; $('info').textContent = '';
+    if (!s) { o.textContent = ''; return; }
+    try {
+      if (m === 'encode') {
+        var bytes = new TextEncoder().encode(s); o.textContent = toB64(bytes, { url: $('oUrl').checked, nopad: $('oPad').checked, wrap: $('oWrap').checked });
+        $('info').textContent = bytes.length + ' bytes in \u2192 ' + o.textContent.length + ' characters out (+' + Math.round((o.textContent.length / bytes.length - 1) * 100) + '%)';
+      } else {
+        var b = fromB64(s); o.textContent = new TextDecoder('utf-8', { fatal: true }).decode(b);
+        $('info').textContent = b.length + ' bytes decoded';
+      }
+    } catch (e) {
+      o.className = 'out err'; o.textContent = m === 'decode' ? 'Could not decode. Check that this is valid Base64 text. If it is a binary file, use the File & image tab.' : 'Could not encode this input.';
     }
   }
+  ['in'].forEach(function (id) { $(id).addEventListener('input', run); });
+  ['oUrl', 'oPad', 'oWrap'].forEach(function (id) { $(id).addEventListener('change', run); });
+  document.querySelectorAll('input[name="mode"]').forEach(function (r) { r.addEventListener('change', run); });
+  $('clr').addEventListener('click', function () { $('in').value = ''; run(); });
+  $('swap').addEventListener('click', function () {
+    var res = $('out').classList.contains('err') ? '' : $('out').textContent;
+    $('in').value = res; document.querySelector('input[name="mode"][value="' + (mode() === 'encode' ? 'decode' : 'encode') + '"]').checked = true; run();
+  });
+  VT.tabs($('mainTabs'), $('mainPanes'));
 
-  function updateLabels() {
-    if (mode() === 'encode') { inputLabel.textContent = 'Text'; outputLabel.textContent = 'Base64'; }
-    else { inputLabel.textContent = 'Base64'; outputLabel.textContent = 'Text'; }
+  /* file -> base64 */
+  VT.drop($('dz'), function (files) {
+    var f = files[0]; if (!f) return;
+    if (f.size > 10 * 1048576) { VT.toast('File is larger than 10 MB'); return; }
+    var r = new FileReader();
+    r.onload = function () {
+      var uri = r.result; fileMime = f.type || 'application/octet-stream'; fileB64 = uri.slice(uri.indexOf(',') + 1);
+      $('fileOut').classList.remove('hidden');
+      $('fileInfo').textContent = f.name + ' \u00b7 ' + VT.bytes(f.size) + ' \u2192 ' + VT.bytes(fileB64.length) + ' of Base64 \u00b7 ' + fileMime;
+      $('filePreviewText').textContent = fileB64.length > 3000 ? fileB64.slice(0, 3000) + '\n... (' + (fileB64.length - 3000) + ' more characters, use the copy buttons for the full value)' : fileB64;
+      var p = $('prev'); if (fileMime.indexOf('image/') === 0) { p.src = uri; p.style.display = 'block'; } else p.style.display = 'none';
+    };
+    r.readAsDataURL(f);
+  });
+  function uri() { return 'data:' + fileMime + ';base64,' + fileB64; }
+  $('cB64').addEventListener('click', function () { VT.copy(fileB64, 'Base64 copied'); });
+  $('cUri').addEventListener('click', function () { VT.copy(uri(), 'Data URI copied'); });
+  $('cCss').addEventListener('click', function () { VT.copy("background-image: url('" + uri() + "');", 'CSS copied'); });
+  $('cImg').addEventListener('click', function () { VT.copy('<img src="' + uri() + '" alt="">', 'HTML copied'); });
+
+  /* base64 -> file */
+  function sniff(b) {
+    var h = Array.from(b.subarray(0, 12), function (x) { return x.toString(16).padStart(2, '0'); }).join('');
+    if (h.indexOf('89504e47') === 0) return ['image/png', 'png']; if (h.indexOf('ffd8ff') === 0) return ['image/jpeg', 'jpg'];
+    if (h.indexOf('47494638') === 0) return ['image/gif', 'gif']; if (h.indexOf('25504446') === 0) return ['application/pdf', 'pdf'];
+    if (h.indexOf('52494646') === 0 && h.slice(16, 24) === '57454250') return ['image/webp', 'webp'];
+    if (h.indexOf('504b0304') === 0) return ['application/zip', 'zip']; return ['application/octet-stream', 'bin'];
   }
-
-  input.addEventListener('input', process);
-  document.querySelectorAll('input[name="mode"]').forEach(function (el) {
-    el.addEventListener('change', function () { updateLabels(); process(); });
-  });
-  copyBtn.addEventListener('click', function () {
-    navigator.clipboard.writeText(output.textContent).then(function () {
-      copyBtn.classList.add('is-copied'); copyBtn.textContent = 'Copied!';
-      setTimeout(function () { copyBtn.classList.remove('is-copied'); copyBtn.textContent = 'Copy result'; }, 1500);
-    });
-  });
+  function decodeFile() {
+    var s = $('b2f').value.trim(), info = $('b2fInfo'), btn = $('b2fBtn'), p = $('prev2');
+    decodedBlob = null; btn.disabled = true; p.style.display = 'none';
+    if (!s) { info.className = 'out'; info.style.color = '#999'; info.textContent = 'The detected file type appears here.'; return; }
+    info.style.color = '';
+    try {
+      var b = fromB64(s), m = s.match(/^data:([^;,]+)/), t = m ? [m[1], (m[1].split('/')[1] || 'bin').replace('jpeg', 'jpg')] : sniff(b);
+      decodedBlob = new Blob([b], { type: t[0] }); btn.disabled = false; btn.setAttribute('data-ext', t[1]);
+      info.className = 'out ok'; info.textContent = 'Detected ' + t[0] + ' \u00b7 ' + VT.bytes(b.length);
+      if (t[0].indexOf('image/') === 0) { if (prev2Url) URL.revokeObjectURL(prev2Url); prev2Url = URL.createObjectURL(decodedBlob); p.src = prev2Url; p.style.display = 'block'; }
+    } catch (e) { info.className = 'out err'; info.textContent = 'This is not valid Base64.'; }
+  }
+  $('b2f').addEventListener('input', VT.debounce(decodeFile, 250));
+  $('b2fBtn').addEventListener('click', function () { if (decodedBlob) VT.download(decodedBlob, ($('fname').value || 'decoded') + '.' + $('b2fBtn').getAttribute('data-ext')); });
 })();
   </script>
 </BaseLayout>

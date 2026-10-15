@@ -40,6 +40,7 @@ const ldBlocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
   <Header />
   <slot />
   <Footer />
+  <script is:inline src="/js/tools.js"></script>
   <slot name="body-end" />
 </body>
 </html>

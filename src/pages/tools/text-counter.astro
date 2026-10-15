@@ -9,31 +9,71 @@ const faqs = [
 ---
 <BaseLayout
   title="Free Word & Character Counter | Veloce Tools"
-  description="Count characters, words, sentences, and paragraphs instantly, with estimated reading time. Free, no signup, updates live as you type."
+  description="Count characters, words, sentences and paragraphs live. Track limits for X, Instagram and SEO titles, see keyword density, and clean up text. Free, no signup."
   jsonLd={[
     { '@context': 'https://schema.org', '@type': 'SoftwareApplication', name: 'Text Counter', applicationCategory: 'BrowserApplication', operatingSystem: 'Any', offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' } },
     { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
   ]}
 >
   <section class="section--tight">
-    <div class="tool-hero">
+<div class="tool-hero">
       <span class="eyebrow">Free tool</span>
-      <h1>Word & Character Counter</h1>
-      <p>Paste or type your text and see live counts — characters, words, sentences, paragraphs, and reading time.</p>
+      <h1>Word &amp; Character Counter</h1>
+      <p>Live counts, platform character limits, keyword density and quick text clean-up tools, all in one place.</p>
     </div>
 
-    <div class="field">
-      <label for="textInput">Your text</label>
-      <textarea id="textInput" placeholder="Write or paste your text..." style="min-height:220px;"></textarea>
+    <div class="field" style="margin-bottom:10px;">
+      <label for="t">Your text</label>
+      <textarea id="t" placeholder="Type or paste your text here..." style="min-height:240px;"></textarea>
+    </div>
+    <div class="actions" style="margin-top:0;">
+      <button type="button" class="mini" data-tf="upper">UPPERCASE</button>
+      <button type="button" class="mini" data-tf="lower">lowercase</button>
+      <button type="button" class="mini" data-tf="title">Title Case</button>
+      <button type="button" class="mini" data-tf="sentence">Sentence case</button>
+      <button type="button" class="mini" data-tf="spaces">Remove extra spaces</button>
+      <button type="button" class="mini" data-tf="breaks">Remove line breaks</button>
+      <button type="button" class="mini" data-tf="sort">Sort lines A-Z</button>
+      <button type="button" class="mini" data-tf="dedupe">Remove duplicate lines</button>
+      <button type="button" class="mini" id="undo" disabled>Undo</button>
+      <button type="button" class="mini dark" data-copy="#t">Copy text</button>
+      <button type="button" class="mini" id="dl">Download .txt</button>
+      <button type="button" class="mini" id="clr">Clear</button>
     </div>
 
-    <div class="tool-columns" style="margin-top:20px; grid-template-columns:repeat(3,1fr); gap:14px;">
-      <div class="compare-box"><div class="compare-label">Characters</div><div class="compare-value" id="charCount">0</div></div>
-      <div class="compare-box"><div class="compare-label">Words</div><div class="compare-value" id="wordCount">0</div></div>
-      <div class="compare-box"><div class="compare-label">Sentences</div><div class="compare-value" id="sentenceCount">0</div></div>
-      <div class="compare-box"><div class="compare-label">Paragraphs</div><div class="compare-value" id="paraCount">0</div></div>
-      <div class="compare-box"><div class="compare-label">No spaces</div><div class="compare-value" id="noSpaceCount">0</div></div>
-      <div class="compare-box"><div class="compare-label">Reading time</div><div class="compare-value" id="readTime">0 min</div></div>
+    <div class="stat-grid" style="margin-top:20px;">
+      <div class="stat"><b id="cC">0</b><span>Characters</span></div>
+      <div class="stat"><b id="cN">0</b><span>No spaces</span></div>
+      <div class="stat"><b id="cW">0</b><span>Words</span></div>
+      <div class="stat"><b id="cS">0</b><span>Sentences</span></div>
+      <div class="stat"><b id="cP">0</b><span>Paragraphs</span></div>
+      <div class="stat"><b id="cL">0</b><span>Lines</span></div>
+      <div class="stat"><b id="cR">0s</b><span>Reading time</span></div>
+      <div class="stat"><b id="cK">0s</b><span>Speaking time</span></div>
+    </div>
+
+    <div class="tool-columns" style="margin-top:30px;">
+      <div class="panel">
+        <p class="tool-label">Character limit</p>
+        <div class="chips" id="limits">
+          <button type="button" class="chip active" data-l="280">X / Twitter 280</button>
+          <button type="button" class="chip" data-l="2200">Instagram 2,200</button>
+          <button type="button" class="chip" data-l="3000">LinkedIn 3,000</button>
+          <button type="button" class="chip" data-l="60">SEO title 60</button>
+          <button type="button" class="chip" data-l="160">Meta description 160</button>
+          <button type="button" class="chip" data-l="160s">SMS 160</button>
+          <button type="button" class="chip" data-l="100">YouTube title 100</button>
+          <button type="button" class="chip" data-l="custom">Custom</button>
+        </div>
+        <div class="field hidden" id="customL"><label for="cl">Custom limit</label><input type="number" id="cl" min="1" value="500" /></div>
+        <div class="progress" id="prog"><div></div></div>
+        <p class="hint" id="limTxt"></p>
+      </div>
+      <div class="panel">
+        <p class="tool-label">Top keywords</p>
+        <label class="check"><input type="checkbox" id="stop" checked /> Ignore common words (the, and, of...)</label>
+        <div id="kw" style="margin-top:8px;"><p class="hint">Start typing to see your most-used words.</p></div>
+      </div>
     </div>
   </section>
 
@@ -64,20 +104,62 @@ const faqs = [
 
   <script slot="body-end" is:inline>
 (function () {
-  var input = document.getElementById('textInput');
+  var $ = function (id) { return document.getElementById(id); };
+  var STOP = new Set('the and for are but not you all any can had her was one our out has have this that with from they will would there their what about which when your said each she how its who been were than them then these those into over such only also just more some very'.split(' '));
+  var limit = 280, prev = null;
+
+  function fmtTime(sec) { return sec < 60 ? Math.round(sec) + 's' : Math.floor(sec / 60) + 'm ' + Math.round(sec % 60) + 's'; }
   function update() {
-    var text = input.value;
-    var words = text.trim() ? text.trim().split(/\s+/).length : 0;
-    var sentences = text.trim() ? (text.match(/[.!?]+(\s|$)/g) || []).length : 0;
-    var paragraphs = text.trim() ? text.split(/\n\s*\n/).filter(function (p) { return p.trim(); }).length : 0;
-    document.getElementById('charCount').textContent = text.length;
-    document.getElementById('wordCount').textContent = words;
-    document.getElementById('sentenceCount').textContent = sentences;
-    document.getElementById('paraCount').textContent = paragraphs;
-    document.getElementById('noSpaceCount').textContent = text.replace(/\s/g, '').length;
-    document.getElementById('readTime').textContent = Math.max(1, Math.ceil(words / 200)) + ' min';
+    var s = $('t').value, trimmed = s.trim();
+    var words = trimmed ? trimmed.split(/\s+/).length : 0;
+    $('cC').textContent = s.length.toLocaleString();
+    $('cN').textContent = s.replace(/\s/g, '').length.toLocaleString();
+    $('cW').textContent = words.toLocaleString();
+    $('cS').textContent = trimmed ? (s.match(/[^.!?\n]+[.!?]+(\s|$)|[^.!?\n]+$/g) || []).filter(function (x) { return x.trim(); }).length : 0;
+    $('cP').textContent = trimmed ? s.split(/\n\s*\n/).filter(function (p) { return p.trim(); }).length : 0;
+    $('cL').textContent = s ? s.split('\n').length : 0;
+    $('cR').textContent = fmtTime(words / 200 * 60);
+    $('cK').textContent = fmtTime(words / 130 * 60);
+
+    var pct = Math.min(100, s.length / limit * 100), over = s.length > limit;
+    $('prog').firstElementChild.style.width = pct + '%'; $('prog').classList.toggle('over', over);
+    $('limTxt').textContent = over ? (s.length - limit) + ' characters over the limit of ' + limit.toLocaleString() : (limit - s.length).toLocaleString() + ' characters left of ' + limit.toLocaleString();
+
+    var toks = (s.toLowerCase().match(/[\p{L}\p{N}'\u2019-]+/gu) || []).filter(function (w) { return w.length > 2; });
+    var total = toks.length; if ($('stop').checked) toks = toks.filter(function (w) { return !STOP.has(w); });
+    var freq = {}; toks.forEach(function (w) { freq[w] = (freq[w] || 0) + 1; });
+    var top = Object.keys(freq).sort(function (a, b) { return freq[b] - freq[a]; }).slice(0, 10);
+    $('kw').innerHTML = top.length ? top.map(function (w) {
+      return '<div class="rowline"><div class="val">' + VT.esc(w) + '</div><span class="hint" style="margin:0;">' + freq[w] + '&times; &middot; ' + (freq[w] / (total || 1) * 100).toFixed(1) + '%</span></div>';
+    }).join('') : '<p class="hint">Start typing to see your most-used words.</p>';
   }
-  input.addEventListener('input', update);
+
+  var tf = {
+    upper: function (s) { return s.toUpperCase(); },
+    lower: function (s) { return s.toLowerCase(); },
+    title: function (s) { return s.toLowerCase().replace(/(^|\s)(\S)/g, function (m, a, b) { return a + b.toUpperCase(); }); },
+    sentence: function (s) { return s.toLowerCase().replace(/(^\s*|[.!?]\s+)(\S)/g, function (m, a, b) { return a + b.toUpperCase(); }); },
+    spaces: function (s) { return s.split('\n').map(function (l) { return l.replace(/[ \t]+/g, ' ').trim(); }).join('\n').replace(/\n{3,}/g, '\n\n'); },
+    breaks: function (s) { return s.replace(/\s*\n+\s*/g, ' ').trim(); },
+    sort: function (s) { return s.split('\n').sort(function (a, b) { return a.localeCompare(b); }).join('\n'); },
+    dedupe: function (s) { var seen = {}; return s.split('\n').filter(function (l) { if (seen[l]) return false; seen[l] = 1; return true; }).join('\n'); }
+  };
+  document.querySelectorAll('[data-tf]').forEach(function (b) {
+    b.addEventListener('click', function () { prev = $('t').value; $('t').value = tf[b.getAttribute('data-tf')](prev); $('undo').disabled = false; update(); });
+  });
+  $('undo').addEventListener('click', function () { if (prev !== null) { $('t').value = prev; prev = null; $('undo').disabled = true; update(); } });
+  $('clr').addEventListener('click', function () { prev = $('t').value; $('t').value = ''; $('undo').disabled = !prev; update(); });
+  $('dl').addEventListener('click', function () { if ($('t').value) VT.download($('t').value, 'text.txt'); });
+  document.querySelectorAll('#limits .chip').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('#limits .chip').forEach(function (x) { x.classList.toggle('active', x === b); });
+      var v = b.getAttribute('data-l'); $('customL').classList.toggle('hidden', v !== 'custom');
+      limit = v === 'custom' ? Number($('cl').value) || 500 : parseInt(v, 10); update();
+    });
+  });
+  $('cl').addEventListener('input', function () { limit = Number($('cl').value) || 1; update(); });
+  $('stop').addEventListener('change', update);
+  $('t').addEventListener('input', update);
   update();
 })();
   </script>

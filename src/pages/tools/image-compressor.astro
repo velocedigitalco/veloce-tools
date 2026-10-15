@@ -3,49 +3,113 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
 const faqs = [
   { q: 'Does this upload my image anywhere?', a: 'No. Compression happens entirely in your browser using the Canvas API. Your image never leaves your device.' },
-  { q: 'What quality setting should I use?', a: '0.7–0.8 is a good default — a large reduction in file size with barely visible quality loss. Drop to 0.5–0.6 for thumbnails or when file size matters more than sharpness.' },
-  { q: 'Why did my PNG come out bigger or look different?', a: 'This tool compresses to JPEG, which doesn\'t support transparency — if your source had a transparent background, it\'ll be filled in. For transparent images, use the Image Converter to export as WebP instead.' },
+  { q: 'What quality setting should I use?', a: '70–80% is a good default: a large reduction in file size with barely visible quality loss. The presets cover the common cases: Web for general use, Smallest file for thumbnails, High quality for portfolios, and WhatsApp / email for quick sharing.' },
+  { q: 'Why did my transparent PNG get a white background?', a: 'JPEG doesn\'t support transparency, so transparent areas are filled with a background color (white by default, changeable under More options). To keep transparency, choose WebP or PNG as the output format. PNG is lossless, so it only gets smaller if you also reduce the dimensions.' },
 ];
 ---
 <BaseLayout
-  title="Free Image Compressor — Reduce File Size in Your Browser | Veloce Tools"
-  description="Compress JPEG and PNG images right in your browser. Adjust quality, see the before/after size instantly, and download — free, no upload, no signup."
+  title="Free Image Compressor: Reduce File Size Online | Veloce Tools"
+  description="Compress images in bulk in your browser. Choose a preset, resize, pick JPEG or WebP, compare with a slider and download a ZIP. Free, no upload."
   jsonLd={[
     { '@context': 'https://schema.org', '@type': 'SoftwareApplication', name: 'Image Compressor', applicationCategory: 'BrowserApplication', operatingSystem: 'Any', offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' } },
     { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
   ]}
 >
   <section class="section--tight">
-    <div class="tool-hero">
+<div class="tool-hero">
       <span class="eyebrow">Free tool</span>
       <h1>Image Compressor</h1>
-      <p>Drop in an image, adjust quality, and download a smaller file — processed locally, nothing is uploaded.</p>
+      <p>Compress one image or fifty. Pick a preset or fine-tune quality, size and format, compare before and after, then download. Everything happens in your browser.</p>
     </div>
 
     <div class="tool-columns">
       <div>
-        <label class="dropzone" id="dropzone">
-          <input type="file" id="compressFile" accept="image/*" />
+        <label class="dropzone" id="dz">
+          <input type="file" multiple accept="image/*" />
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 16V4m0 0 5 5m-5-5-5 5M5 20h14" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <span class="dz-title">Click to choose an image, or drag one here</span>
-          <span class="dz-sub">JPEG, PNG, or WebP</span>
-          <img id="dz-preview" class="dropzone-preview" />
+          <span class="dz-title">Drop images here, click to browse, or paste with Ctrl+V</span>
+          <span class="dz-sub">Batch supported &middot; JPEG, PNG, WebP, GIF, BMP</span>
         </label>
 
-        <div class="slider-row">
-          <div class="slider-top"><span>Quality</span><strong id="qualityValue">0.7</strong></div>
-          <input type="range" id="compressQuality" min="0.1" max="1" step="0.05" value="0.7" />
+        <p class="tool-label">Preset</p>
+        <div class="chips" id="presets">
+          <button type="button" class="chip active" data-p="web">Web (balanced)</button>
+          <button type="button" class="chip" data-p="small">Smallest file</button>
+          <button type="button" class="chip" data-p="high">High quality</button>
+          <button type="button" class="chip" data-p="chat">WhatsApp / email</button>
         </div>
+
+        <div class="slider-row">
+          <div class="slider-top"><span>Quality</span><strong id="qv">75%</strong></div>
+          <input type="range" id="q" min="10" max="100" step="1" value="75" />
+        </div>
+
+        <div class="opt-grid">
+          <div class="field">
+            <label for="fmt">Output format</label>
+            <select id="fmt">
+              <option value="image/jpeg">JPEG (works everywhere)</option>
+              <option value="image/webp">WebP (smaller)</option>
+              <option value="image/png">PNG (lossless, resize only)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="max">Max width / height</label>
+            <select id="max">
+              <option value="0">Keep original size</option>
+              <option value="3840">3840 px (4K)</option>
+              <option value="2560">2560 px</option>
+              <option value="1920" selected>1920 px (Full HD)</option>
+              <option value="1600">1600 px</option>
+              <option value="1280">1280 px (HD)</option>
+              <option value="1080">1080 px</option>
+              <option value="800">800 px</option>
+              <option value="640">640 px</option>
+              <option value="custom">Custom...</option>
+            </select>
+          </div>
+        </div>
+        <div class="field hidden" id="customWrap">
+          <label for="customMax">Custom max size (px)</label>
+          <input type="number" id="customMax" min="16" max="10000" value="1000" />
+        </div>
+
+        <details class="adv">
+          <summary>More options</summary>
+          <div>
+            <div class="field">
+              <label for="bg">Background for transparent areas (JPEG)</label>
+              <input type="color" id="bg" value="#ffffff" style="height:44px;padding:4px;" />
+            </div>
+            <label class="check"><input type="checkbox" id="suffix" checked /> Add "-compressed" to file names</label>
+            <p class="hint">Metadata such as EXIF location and camera data is removed automatically during compression.</p>
+          </div>
+        </details>
       </div>
 
-      <div class="tool-columns__sticky">
-        <p class="tool-label">Result</p>
-        <div class="compare-row" id="compareRow" style="display:none;">
-          <div class="compare-box"><div class="compare-label">Original</div><div class="compare-value" id="originalSize">—</div></div>
-          <div class="compare-box is-win"><div class="compare-value" id="compressedSize">—</div><div class="compare-label" style="margin-top:6px;">Compressed</div></div>
+      <div>
+        <div class="stat-grid" id="stats" style="display:none;">
+          <div class="stat"><b id="sFiles">0</b><span>Files</span></div>
+          <div class="stat"><b id="sBefore">0</b><span>Before</span></div>
+          <div class="stat"><b id="sAfter">0</b><span>After</span></div>
+          <div class="stat"><b id="sSaved" class="save">0%</b><span>Saved</span></div>
         </div>
-        <div id="compressResult" class="result-box" style="display:none;"></div>
-        <button type="button" class="primary-button" id="downloadBtn" style="width:100%; border:none; margin-top:14px; display:none; text-align:center;">Download compressed image</button>
+        <div id="cmpWrap" class="hidden" style="margin-bottom:16px;">
+          <p class="tool-label">Compare &middot; drag across the image</p>
+          <div class="cmp" id="cmp">
+            <img id="cmpB" alt="Original" />
+            <div class="top"><img id="cmpA" alt="Compressed" /></div>
+            <div class="line"></div>
+            <span class="lb" style="left:10px;">Compressed</span>
+            <span class="lb" style="right:10px;">Original</span>
+            <input type="range" id="cmpR" min="0" max="100" value="50" aria-label="Comparison slider" />
+          </div>
+        </div>
+        <div id="list"><div class="out" style="color:#999;">Your compressed images will appear here.</div></div>
+        <div class="actions" id="acts" style="display:none;">
+          <button type="button" class="primary-button" id="zipBtn" style="border:none;">Download all (ZIP)</button>
+          <button type="button" class="secondary-button" id="clearBtn">Clear all</button>
+        </div>
       </div>
     </div>
   </section>
@@ -77,72 +141,115 @@ const faqs = [
 
   <script slot="body-end" is:inline>
 (function () {
-  var fileInput = document.getElementById('compressFile');
-  var dropzone = document.getElementById('dropzone');
-  var dzPreview = document.getElementById('dz-preview');
-  var qualityInput = document.getElementById('compressQuality');
-  var qualityValue = document.getElementById('qualityValue');
-  var compareRow = document.getElementById('compareRow');
-  var originalSize = document.getElementById('originalSize');
-  var compressedSize = document.getElementById('compressedSize');
-  var resultBox = document.getElementById('compressResult');
-  var downloadBtn = document.getElementById('downloadBtn');
-  var currentFile = null;
-  var currentUrl = null;
+  var PRESETS = {
+    web:   { q: 75, fmt: 'image/jpeg', max: '1920' },
+    small: { q: 50, fmt: 'image/webp', max: '1280' },
+    high:  { q: 90, fmt: 'image/jpeg', max: '3840' },
+    chat:  { q: 60, fmt: 'image/jpeg', max: '1080' }
+  };
+  var $ = function (id) { return document.getElementById(id); };
+  var items = [], sel = null, token = 0;
 
-  qualityInput.addEventListener('input', function () {
-    qualityValue.textContent = qualityInput.value;
-    if (currentFile) process();
-  });
-
-  fileInput.addEventListener('change', function () {
-    currentFile = fileInput.files[0];
-    if (currentFile) {
-      dzPreview.src = URL.createObjectURL(currentFile);
-      dzPreview.style.display = 'block';
-      process();
-    }
-  });
-
-  ['dragover', 'dragleave', 'drop'].forEach(function (evt) {
-    dropzone.addEventListener(evt, function (e) {
-      e.preventDefault();
-      dropzone.classList.toggle('is-dragover', evt === 'dragover');
-    });
-  });
-
-  function process() {
-    var quality = Number(qualityInput.value);
-    var reader = new FileReader();
-    reader.onload = function (e) {
-      var img = new Image();
-      img.onload = function () {
-        var canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        canvas.getContext('2d').drawImage(img, 0, 0);
-        canvas.toBlob(function (blob) {
-          if (currentUrl) URL.revokeObjectURL(currentUrl);
-          currentUrl = URL.createObjectURL(blob);
-          originalSize.textContent = (currentFile.size / 1024).toFixed(0) + ' KB';
-          compressedSize.textContent = (blob.size / 1024).toFixed(0) + ' KB';
-          var reduction = Math.round((1 - blob.size / currentFile.size) * 100);
-          resultBox.textContent = reduction > 0 ? reduction + '% smaller' : 'No significant reduction at this quality';
-          compareRow.style.display = 'grid';
-          resultBox.style.display = 'block';
-          downloadBtn.style.display = 'block';
-          downloadBtn.onclick = function () {
-            var link = document.createElement('a');
-            link.href = currentUrl;
-            link.download = 'veloce-compressed.jpg';
-            link.click();
-          };
-        }, 'image/jpeg', quality);
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(currentFile);
+  function maxVal() { return $('max').value === 'custom' ? Number($('customMax').value) || 0 : Number($('max').value); }
+  function opts() {
+    return { q: Number($('q').value) / 100, fmt: $('fmt').value, max: maxVal(), bg: $('bg').value };
   }
+  function setPreset(p) {
+    var c = PRESETS[p]; if (!c) return;
+    $('q').value = c.q; $('fmt').value = c.fmt; $('max').value = c.max;
+    $('customWrap').classList.add('hidden'); $('qv').textContent = c.q + '%';
+    document.querySelectorAll('#presets .chip').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-p') === p); });
+  }
+  function custom() { document.querySelectorAll('#presets .chip').forEach(function (b) { b.classList.remove('active'); }); }
+
+  document.querySelectorAll('#presets .chip').forEach(function (b) {
+    b.addEventListener('click', function () { setPreset(b.getAttribute('data-p')); run(); });
+  });
+  $('q').addEventListener('input', function () { $('qv').textContent = $('q').value + '%'; custom(); run(); });
+  $('fmt').addEventListener('change', function () { custom(); run(); });
+  $('max').addEventListener('change', function () { $('customWrap').classList.toggle('hidden', $('max').value !== 'custom'); custom(); run(); });
+  $('customMax').addEventListener('input', function () { run(); });
+  $('bg').addEventListener('input', function () { run(); });
+  $('suffix').addEventListener('change', render);
+
+  function addFiles(files) {
+    files = files.filter(function (f) { return f.type.indexOf('image/') === 0; });
+    if (!files.length) { VT.toast('Please choose image files'); return; }
+    Promise.all(files.map(function (f) {
+      return VT.loadImage(f).then(function (r) { return { file: f, img: r.img, url: r.url, res: null }; }).catch(function () { VT.toast('Could not read ' + f.name); return null; });
+    })).then(function (list) {
+      list.filter(Boolean).forEach(function (it) { items.push(it); });
+      if (!sel && items.length) sel = items[0];
+      run();
+    });
+  }
+  VT.drop($('dz'), addFiles, { paste: true, accept: 'image/' });
+
+  function outName(it) {
+    var base = it.file.name.replace(/\.[^.]+$/, '');
+    return base + ($('suffix').checked ? '-compressed' : '') + '.' + VT.EXT[$('fmt').value];
+  }
+
+  var run = VT.debounce(function () {
+    var my = ++token, o = opts();
+    if (!items.length) { render(); return; }
+    Promise.all(items.map(function (it) {
+      return VT.processImage(it.img, o).then(function (r) { if (my === token) it.res = r; });
+    })).then(function () { if (my === token) render(); });
+  }, 120);
+
+  function render() {
+    var list = $('list');
+    if (!items.length) {
+      list.innerHTML = '<div class="out" style="color:#999;">Your compressed images will appear here.</div>';
+      $('stats').style.display = 'none'; $('acts').style.display = 'none'; $('cmpWrap').classList.add('hidden'); return;
+    }
+    var before = 0, after = 0;
+    list.innerHTML = '';
+    items.forEach(function (it, i) {
+      if (!it.res) return;
+      before += it.file.size; after += it.res.blob.size;
+      var pct = Math.round((1 - it.res.blob.size / it.file.size) * 100);
+      var div = document.createElement('div');
+      div.className = 'file-item' + (it === sel ? ' sel' : '');
+      div.innerHTML = '<img src="' + it.url + '" alt="" />' +
+        '<div><div class="nm">' + VT.esc(it.file.name) + '</div><div class="sub">' + VT.bytes(it.file.size) + ' &rarr; ' + VT.bytes(it.res.blob.size) +
+        ' &middot; ' + it.res.w + '&times;' + it.res.h + ' &middot; ' +
+        (pct > 0 ? '<span class="save">-' + pct + '%</span>' : '<span class="warnc">already well optimized</span>') + '</div></div>' +
+        '<div class="btn-row" style="margin:0;"><button class="mini dark" data-dl="' + i + '">Download</button><button class="mini" data-rm="' + i + '">Remove</button></div>';
+      div.querySelector('img').addEventListener('click', function () { sel = it; render(); });
+      list.appendChild(div);
+    });
+    $('stats').style.display = 'grid';
+    $('sFiles').textContent = items.length;
+    $('sBefore').textContent = VT.bytes(before);
+    $('sAfter').textContent = VT.bytes(after);
+    var tot = before ? Math.max(0, Math.round((1 - after / before) * 100)) : 0;
+    $('sSaved').textContent = tot + '%';
+    $('acts').style.display = 'flex';
+    $('zipBtn').style.display = items.length > 1 ? '' : 'none';
+    if (sel && sel.res) {
+      if (sel._u) URL.revokeObjectURL(sel._u);
+      sel._u = URL.createObjectURL(sel.res.blob);
+      $('cmpB').src = sel.url; $('cmpA').src = sel._u; $('cmpWrap').classList.remove('hidden');
+    }
+  }
+
+  $('list').addEventListener('click', function (e) {
+    var d = e.target.closest('[data-dl]'), r = e.target.closest('[data-rm]');
+    if (d) { var it = items[Number(d.getAttribute('data-dl'))]; VT.download(it.res.blob, outName(it)); }
+    if (r) { var k = Number(r.getAttribute('data-rm')); var gone = items.splice(k, 1)[0]; URL.revokeObjectURL(gone.url); if (sel === gone) sel = items[0] || null; render(); }
+  });
+  $('zipBtn').addEventListener('click', function () {
+    var seen = {};
+    VT.zipBlobs(items.map(function (it) {
+      var n = outName(it); if (seen[n]) { n = n.replace(/(\.[^.]+)$/, '-' + seen[n]++ + '$1'); } else seen[n] = 1;
+      return { name: n, blob: it.res.blob };
+    })).then(function (z) { VT.download(z, 'veloce-compressed-images.zip'); });
+  });
+  $('clearBtn').addEventListener('click', function () { items.forEach(function (i) { URL.revokeObjectURL(i.url); }); items = []; sel = null; render(); });
+  $('cmpR').addEventListener('input', function () { $('cmp').style.setProperty('--r', (100 - Number($('cmpR').value)) + '%'); });
+  $('cmp').style.setProperty('--r', '50%');
 })();
   </script>
 </BaseLayout>

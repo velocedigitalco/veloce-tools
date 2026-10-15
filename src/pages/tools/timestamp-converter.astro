@@ -9,40 +9,70 @@ const faqs = [
 ---
 <BaseLayout
   title="Free Unix Timestamp Converter | Veloce Tools"
-  description="Convert Unix timestamps to readable dates and back, instantly. Free, no signup, shows the current timestamp live."
+  description="Convert Unix timestamps to dates and back in any timezone. Auto-detects seconds to nanoseconds and converts lists. Free, with a live clock."
   jsonLd={[
     { '@context': 'https://schema.org', '@type': 'SoftwareApplication', name: 'Timestamp Converter', applicationCategory: 'BrowserApplication', operatingSystem: 'Any', offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' } },
     { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
   ]}
 >
   <section class="section--tight">
-    <div class="tool-hero">
+<div class="tool-hero">
       <span class="eyebrow">Free tool</span>
       <h1>Unix Timestamp Converter</h1>
-      <p>Convert between Unix timestamps and readable dates, both directions.</p>
+      <p>Convert timestamps to dates and dates to timestamps in any timezone. Auto-detects seconds, milliseconds and more, and converts whole lists at once.</p>
     </div>
 
-    <div class="compare-box" style="max-width:420px; margin-bottom:30px;">
-      <div class="compare-label">Current Unix timestamp</div>
-      <div class="compare-value" id="liveTimestamp" style="font-size:24px;">—</div>
-    </div>
-
-    <div class="tool-columns">
+    <div class="panel" style="display:flex;flex-wrap:wrap;gap:20px;align-items:center;justify-content:space-between;">
       <div>
-        <p class="tool-label">Timestamp → Date</p>
-        <div class="field">
-          <label for="tsInput">Unix timestamp</label>
-          <input id="tsInput" type="text" placeholder="e.g. 1735689600" />
-        </div>
-        <div class="result-box" id="tsResult">Enter a timestamp above.</div>
+        <p class="tool-label" style="margin-bottom:4px;">Current Unix time</p>
+        <div class="mono" style="font-size:34px;font-weight:600;letter-spacing:-1px;" id="liveS">-</div>
+        <div class="hint mono" id="liveMs" style="margin-top:2px;"></div>
+        <div class="hint mono" id="liveIso" style="margin-top:2px;"></div>
       </div>
+      <div class="actions" style="margin:0;">
+        <button type="button" class="mini dark" id="liveCopy">Copy seconds</button>
+        <button type="button" class="mini" id="liveCopyMs">Copy milliseconds</button>
+        <button type="button" class="mini" id="livePause">Pause</button>
+      </div>
+    </div>
+
+    <div class="field" style="max-width:420px;margin-top:24px;">
+      <label for="tz">Timezone for results</label>
+      <select id="tz"></select>
+    </div>
+
+    <div class="tool-columns" style="margin-top:12px;">
       <div>
-        <p class="tool-label">Date → Timestamp</p>
+        <p class="tool-label">Timestamp to date</p>
         <div class="field">
-          <label for="dateInput">Date & time (your local timezone)</label>
-          <input id="dateInput" type="datetime-local" />
+          <label for="tsIn">Timestamp (one per line to convert many)</label>
+          <textarea id="tsIn" spellcheck="false" placeholder="1735689600" style="min-height:100px;font-family:ui-monospace,Menlo,monospace;font-size:14px;"></textarea>
         </div>
-        <div class="result-box" id="dateResult">Pick a date above.</div>
+        <div class="field">
+          <label for="unit">Unit</label>
+          <select id="unit"><option value="auto">Auto-detect</option><option value="s">Seconds</option><option value="ms">Milliseconds</option><option value="us">Microseconds</option><option value="ns">Nanoseconds</option></select>
+        </div>
+        <div class="actions" style="margin-top:0;"><button type="button" class="mini" id="useNow">Use current time</button></div>
+        <div class="panel" id="tsOut" style="padding:8px 18px;"></div>
+      </div>
+
+      <div>
+        <p class="tool-label">Date to timestamp</p>
+        <div class="field">
+          <label for="dtIn">Date and time (in the timezone selected above)</label>
+          <input type="datetime-local" id="dtIn" step="1" />
+        </div>
+        <div class="chips">
+          <button type="button" class="chip" data-add="-86400000">-1 day</button>
+          <button type="button" class="chip" data-add="-3600000">-1 hour</button>
+          <button type="button" class="chip" data-add="3600000">+1 hour</button>
+          <button type="button" class="chip" data-add="86400000">+1 day</button>
+          <button type="button" class="chip" data-add="604800000">+7 days</button>
+          <button type="button" class="chip" data-add="2592000000">+30 days</button>
+          <button type="button" class="chip" id="nowBtn">Now</button>
+          <button type="button" class="chip" id="todayBtn">Start of today</button>
+        </div>
+        <div class="panel" id="dtOut" style="padding:8px 18px;"></div>
       </div>
     </div>
   </section>
@@ -74,29 +104,94 @@ const faqs = [
 
   <script slot="body-end" is:inline>
 (function () {
-  var liveEl = document.getElementById('liveTimestamp');
-  setInterval(function () { liveEl.textContent = Math.floor(Date.now() / 1000); }, 1000);
-  liveEl.textContent = Math.floor(Date.now() / 1000);
+  var $ = function (id) { return document.getElementById(id); };
+  var ZONES = ['UTC', 'Asia/Karachi', 'Asia/Kolkata', 'Asia/Dhaka', 'Asia/Dubai', 'Asia/Riyadh', 'Asia/Singapore', 'Asia/Tokyo', 'Europe/London', 'Europe/Paris', 'Europe/Istanbul', 'America/New_York', 'America/Chicago', 'America/Los_Angeles', 'Australia/Sydney'];
+  var localName = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Local';
+  var paused = false;
 
-  var tsInput = document.getElementById('tsInput');
-  var tsResult = document.getElementById('tsResult');
-  tsInput.addEventListener('input', function () {
-    var raw = tsInput.value.trim();
-    if (!raw || !/^\d+$/.test(raw)) { tsResult.textContent = 'Enter a numeric Unix timestamp.'; return; }
-    var num = Number(raw);
-    var ms = raw.length >= 13 ? num : num * 1000;
-    var date = new Date(ms);
-    if (isNaN(date.getTime())) { tsResult.textContent = 'Invalid timestamp.'; return; }
-    tsResult.textContent = date.toString();
+  $('tz').innerHTML = '<option value="local">Local (' + VT.esc(localName) + ')</option>' + ZONES.map(function (z) { return '<option value="' + z + '">' + z.replace('_', ' ') + '</option>'; }).join('');
+  function tz() { return $('tz').value; }
+
+  function fmt(ms, z, opt) {
+    var o = Object.assign({ dateStyle: 'full', timeStyle: 'long' }, opt || {}); if (z !== 'local') o.timeZone = z;
+    return new Intl.DateTimeFormat('en-GB', o).format(new Date(ms));
+  }
+  function parts(ms, z) {
+    var o = { hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }; if (z !== 'local') o.timeZone = z;
+    return new Intl.DateTimeFormat('en-US', o).formatToParts(new Date(ms)).reduce(function (a, x) { a[x.type] = x.value; return a; }, {});
+  }
+  function offset(ms, z) {
+    if (z === 'local') return -new Date(ms).getTimezoneOffset() * 60000; if (z === 'UTC') return 0;
+    var p = parts(ms, z); return Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute, +p.second) - Math.floor(ms / 1000) * 1000;
+  }
+  function wallToEpoch(str, z) {
+    var m = str.match(/^(\d{4})-(\d\d)-(\d\d)T(\d\d):(\d\d)(?::(\d\d))?/); if (!m) return NaN;
+    var g = Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0)), o1 = offset(g, z), t = g - o1, o2 = offset(t, z);
+    return o2 !== o1 ? g - o2 : t;
+  }
+  function wallString(ms, z) { var p = parts(ms, z); return p.year + '-' + p.month + '-' + p.day + 'T' + p.hour + ':' + p.minute + ':' + p.second; }
+  function rel(ms) {
+    var d = (ms - Date.now()) / 1000, a = Math.abs(d), r = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+    if (a < 60) return r.format(Math.round(d), 'second'); if (a < 3600) return r.format(Math.round(d / 60), 'minute');
+    if (a < 86400) return r.format(Math.round(d / 3600), 'hour'); if (a < 2592000) return r.format(Math.round(d / 86400), 'day');
+    if (a < 31557600) return r.format(Math.round(d / 2592000), 'month'); return r.format(Math.round(d / 31557600), 'year');
+  }
+  function row(l, v) { return '<div class="rowline"><div class="lbl">' + l + '</div><div class="val">' + VT.esc(v) + '</div><button type="button" class="mini" data-v="' + VT.esc(v) + '">Copy</button></div>'; }
+  function toMs(str, unit) {
+    var n = Number(str); if (!isFinite(n)) return NaN;
+    if (unit === 'auto') { var len = String(Math.abs(Math.trunc(n))).length; unit = len <= 11 ? 's' : len <= 14 ? 'ms' : len <= 17 ? 'us' : 'ns'; }
+    return { s: n * 1000, ms: n, us: n / 1000, ns: n / 1e6 }[unit];
+  }
+
+  function tsToDate() {
+    var lines = $('tsIn').value.split('\n').map(function (l) { return l.trim(); }).filter(Boolean), out = $('tsOut');
+    if (!lines.length) { out.innerHTML = '<p class="hint" style="margin:12px 0;">Enter a timestamp to convert.</p>'; return; }
+    var z = tz(), unit = $('unit').value;
+    if (lines.length === 1) {
+      var ms = toMs(lines[0], unit), d = new Date(ms);
+      if (isNaN(d.getTime())) { out.innerHTML = '<div class="out err" style="margin:12px 0;">That is not a valid timestamp.</div>'; return; }
+      var p = parts(ms, z), doy = Math.floor((Date.UTC(+p.year, +p.month - 1, +p.day) - Date.UTC(+p.year, 0, 0)) / 86400000);
+      out.innerHTML = row('ISO 8601', d.toISOString()) + row(z === 'local' ? 'Local' : z.split('/').pop().replace('_', ' '), fmt(ms, z)) + row('UTC', d.toUTCString()) +
+        row('Relative', rel(ms)) + row('Unix s', String(Math.floor(ms / 1000))) + row('Unix ms', String(Math.floor(ms))) + row('Day of year', 'Day ' + doy);
+    } else {
+      out.innerHTML = lines.slice(0, 200).map(function (l) {
+        var ms = toMs(l, unit); if (isNaN(new Date(ms).getTime())) return row(l.slice(0, 18), 'invalid');
+        return row(l.slice(0, 18), new Date(ms).toISOString() + '  |  ' + fmt(ms, z, { dateStyle: 'medium', timeStyle: 'medium' }));
+      }).join('') + '<div class="actions"><button type="button" class="mini dark" id="copyBatch">Copy all as text</button></div>';
+    }
+  }
+  function dtToTs() {
+    var v = $('dtIn').value, out = $('dtOut');
+    if (!v) { out.innerHTML = '<p class="hint" style="margin:12px 0;">Pick a date and time.</p>'; return; }
+    var ms = wallToEpoch(v, tz()); if (isNaN(ms)) { out.innerHTML = '<div class="out err" style="margin:12px 0;">Invalid date.</div>'; return; }
+    out.innerHTML = row('Unix s', String(Math.floor(ms / 1000))) + row('Unix ms', String(ms)) + row('ISO 8601', new Date(ms).toISOString()) + row('Relative', rel(ms));
+  }
+
+  function tick() {
+    if (paused) return; var n = Date.now();
+    $('liveS').textContent = Math.floor(n / 1000); $('liveMs').textContent = n + ' ms'; $('liveIso').textContent = new Date(n).toISOString();
+  }
+  setInterval(tick, 250); tick();
+  $('livePause').addEventListener('click', function () { paused = !paused; this.textContent = paused ? 'Resume' : 'Pause'; });
+  $('liveCopy').addEventListener('click', function () { VT.copy($('liveS').textContent); });
+  $('liveCopyMs').addEventListener('click', function () { VT.copy(String(Date.now())); });
+
+  $('tsIn').addEventListener('input', tsToDate); $('unit').addEventListener('change', tsToDate);
+  $('useNow').addEventListener('click', function () { $('tsIn').value = Math.floor(Date.now() / 1000); tsToDate(); });
+  $('tz').addEventListener('change', function () { tsToDate(); dtToTs(); });
+  $('dtIn').addEventListener('input', dtToTs);
+  function setWall(ms) { $('dtIn').value = wallString(ms, tz()); dtToTs(); }
+  document.querySelectorAll('[data-add]').forEach(function (b) {
+    b.addEventListener('click', function () { var base = $('dtIn').value ? wallToEpoch($('dtIn').value, tz()) : Date.now(); setWall(base + Number(b.getAttribute('data-add'))); });
+  });
+  $('nowBtn').addEventListener('click', function () { setWall(Date.now()); });
+  $('todayBtn').addEventListener('click', function () { var s = wallString(Date.now(), tz()).slice(0, 10) + 'T00:00:00'; $('dtIn').value = s; dtToTs(); });
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-v]'); if (b && b.closest('#tsOut,#dtOut')) VT.copy(b.getAttribute('data-v'));
+    if (e.target.id === 'copyBatch') VT.copy(Array.from($('tsOut').querySelectorAll('.rowline')).map(function (r) { return r.querySelector('.lbl').textContent + '  ' + r.querySelector('.val').textContent; }).join('\n'));
   });
 
-  var dateInput = document.getElementById('dateInput');
-  var dateResult = document.getElementById('dateResult');
-  dateInput.addEventListener('input', function () {
-    if (!dateInput.value) { dateResult.textContent = 'Pick a date above.'; return; }
-    var date = new Date(dateInput.value);
-    dateResult.textContent = Math.floor(date.getTime() / 1000) + '  (seconds)\n' + date.getTime() + '  (milliseconds)';
-  });
+  $('tsIn').value = Math.floor(Date.now() / 1000); tsToDate(); setWall(Date.now());
 })();
   </script>
 </BaseLayout>

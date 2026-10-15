@@ -9,36 +9,71 @@ const faqs = [
 ---
 <BaseLayout
   title="Free JSON Formatter & Validator Online | Veloce Tools"
-  description="Format, validate, and minify JSON instantly. Paste messy JSON and get a clean, readable (or compact) result — free, no signup, runs in your browser."
+  description="Format, validate, minify and explore JSON in a tree view. Live line and column errors, sort keys and auto-fix. Free, runs in your browser."
   jsonLd={[
     { '@context': 'https://schema.org', '@type': 'SoftwareApplication', name: 'JSON Formatter', applicationCategory: 'BrowserApplication', operatingSystem: 'Any', offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' } },
     { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
   ]}
 >
   <section class="section--tight">
-    <div class="tool-hero">
+<div class="tool-hero">
       <span class="eyebrow">Free tool</span>
-      <h1>JSON Formatter & Validator</h1>
-      <p>Paste messy or minified JSON, get it formatted and validated instantly — or go the other way and minify it.</p>
+      <h1>JSON Formatter &amp; Validator</h1>
+      <p>Paste JSON and it validates live. Format, minify, sort keys, explore it as a tree, or auto-fix common mistakes like trailing commas and single quotes.</p>
     </div>
 
-    <div class="field">
-      <label for="jsonInput">JSON input</label>
-      <textarea id="jsonInput" placeholder='{"paste": "your json here"}' style="min-height:220px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:13px;"></textarea>
+    <div class="actions" style="margin-top:0;">
+      <button type="button" class="mini" id="sampleBtn">Load sample</button>
+      <button type="button" class="mini" id="pasteBtn">Paste from clipboard</button>
+      <label class="mini" style="cursor:pointer;">Upload .json<input type="file" id="fileIn" accept=".json,application/json,text/plain" class="hidden" /></label>
+      <button type="button" class="mini" id="fixBtn">Auto-fix common errors</button>
+      <button type="button" class="mini" id="clearBtn">Clear</button>
     </div>
 
-    <div class="btn-row">
-      <button type="button" class="primary-button" id="formatBtn" style="border:none;">Format</button>
-      <button type="button" class="secondary-button" id="minifyBtn">Minify</button>
-      <button type="button" class="secondary-button" id="clearBtn">Clear</button>
-    </div>
+    <div class="tool-columns" style="margin-top:12px;">
+      <div>
+        <div class="field" style="margin-bottom:12px;">
+          <label for="in">JSON input</label>
+          <textarea id="in" spellcheck="false" placeholder="Paste your JSON here..." style="min-height:380px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;"></textarea>
+        </div>
+        <div class="out" id="status" style="color:#999;">Paste JSON to validate it instantly.</div>
+      </div>
 
-    <p class="tool-label" style="margin-top:24px;">Result</p>
-    <div class="result-row">
-      <pre class="result-box" id="jsonResult" style="min-height:220px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:13px; overflow:auto;">Formatted JSON will appear here.</pre>
+      <div>
+        <div class="opt-grid" style="margin-bottom:12px;">
+          <div class="field">
+            <label for="indent">Indent</label>
+            <select id="indent"><option value="2">2 spaces</option><option value="3">3 spaces</option><option value="4">4 spaces</option><option value="tab">Tab</option></select>
+          </div>
+          <div class="field">
+            <label>Mode</label>
+            <div class="segmented" style="margin:0;">
+              <label><input type="radio" name="mode" value="format" checked><span>Format</span></label>
+              <label><input type="radio" name="mode" value="minify"><span>Minify</span></label>
+            </div>
+          </div>
+        </div>
+        <label class="check"><input type="checkbox" id="sort" /> Sort keys alphabetically</label>
+
+        <div class="tabs" id="viewTabs" style="margin-top:12px;">
+          <button type="button" class="active" data-t="text">Text</button>
+          <button type="button" data-t="tree">Tree view</button>
+        </div>
+        <div id="viewPanes">
+          <div data-pane="text"><pre class="codebox" id="codeOut"></pre></div>
+          <div data-pane="tree" class="hidden">
+            <div class="actions" style="margin-top:0;"><button type="button" class="mini" id="expAll">Expand all</button><button type="button" class="mini" id="colAll">Collapse all</button></div>
+            <div class="tree panel" id="treeOut"></div>
+            <p class="hint">Click any value to copy its path (for example $.users[0].name).</p>
+          </div>
+        </div>
+        <div class="actions">
+          <button type="button" class="primary-button" id="copyBtn" style="border:none;">Copy result</button>
+          <button type="button" class="secondary-button" id="dlBtn">Download .json</button>
+        </div>
+        <div class="stat-grid" id="stats" style="display:none;"></div>
+      </div>
     </div>
-    <button type="button" class="copy-btn" id="copyBtn" style="margin-top:10px;">Copy result</button>
-    <p id="jsonMeta" class="tool-label" style="margin-top:10px; text-transform:none; letter-spacing:0;"></p>
   </section>
 
   <section class="section--tight prose">
@@ -68,55 +103,141 @@ const faqs = [
 
   <script slot="body-end" is:inline>
 (function () {
-  var input = document.getElementById('jsonInput');
-  var result = document.getElementById('jsonResult');
-  var meta = document.getElementById('jsonMeta');
-  var copyBtn = document.getElementById('copyBtn');
+  var $ = function (id) { return document.getElementById(id); };
+  var current = '', parsedData = null, view = 'text';
+  var SAMPLE = { id: 1024, name: "Veloce Tools", active: true, tags: ["json", "formatter", "free"],
+    owner: { name: "Sara Khan", email: "sara@example.com", address: { city: "Lahore", country: "PK" } },
+    items: [{ sku: "A-1", price: 19.99, stock: 12 }, { sku: "B-2", price: 4.5, stock: 0 }], notes: null };
 
-  function parseOrError() {
-    try {
-      return { ok: true, value: JSON.parse(input.value) };
-    } catch (error) {
-      return { ok: false, error: error.message };
+  function sortKeys(v) {
+    if (Array.isArray(v)) return v.map(sortKeys);
+    if (v && typeof v === 'object') { var o = {}; Object.keys(v).sort().forEach(function (k) { o[k] = sortKeys(v[k]); }); return o; }
+    return v;
+  }
+  function hl(s) {
+    var re = /"(?:\\.|[^"\\])*"(\s*:)?|\b(?:true|false|null)\b|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/g, out = '', last = 0, m;
+    while ((m = re.exec(s))) {
+      out += VT.esc(s.slice(last, m.index));
+      var t = m[0], cls = t.charAt(0) === '"' ? (m[1] ? 'tk' : 'ts') : (t === 'true' || t === 'false') ? 'tb' : t === 'null' ? 'tz' : 'tn';
+      out += '<span class="' + cls + '">' + VT.esc(t) + '</span>'; last = m.index + t.length;
     }
+    return out + VT.esc(s.slice(last));
+  }
+  function stats(v) {
+    var s = { keys: 0, objects: 0, arrays: 0, depth: 0, nodes: 0 };
+    (function walk(x, d) {
+      s.nodes++; if (d > s.depth) s.depth = d;
+      if (Array.isArray(x)) { s.arrays++; x.forEach(function (c) { walk(c, d + 1); }); }
+      else if (x && typeof x === 'object') { s.objects++; Object.keys(x).forEach(function (k) { s.keys++; walk(x[k], d + 1); }); }
+    })(v, 0);
+    return s;
+  }
+  function showError(e, raw) {
+    var msg = e.message || String(e), line = 0, col = 0, m;
+    if ((m = msg.match(/line (\d+) column (\d+)/))) { line = +m[1]; col = +m[2]; }
+    else if ((m = msg.match(/position (\d+)/))) {
+      var pos = +m[1], before = raw.slice(0, pos).split('\n'); line = before.length; col = before[before.length - 1].length + 1;
+    }
+    var text = 'Invalid JSON\n' + msg.replace(/^JSON\.parse: /, '');
+    if (line) {
+      var ln = raw.split('\n')[line - 1] || '', start = Math.max(0, col - 40), seg = ln.slice(start, start + 80);
+      text += '\n\nLine ' + line + ', column ' + col + '\n' + seg + '\n' + new Array(col - start).join(' ') + '^';
+    }
+    $('status').className = 'out err mono'; $('status').textContent = text;
+    $('codeOut').textContent = ''; $('treeOut').innerHTML = ''; $('stats').style.display = 'none'; current = ''; parsedData = null;
+  }
+  function pathOf(base, k) { return typeof k === 'number' ? base + '[' + k + ']' : (/^[A-Za-z_$][\w$]*$/.test(k) ? base + '.' + k : base + '["' + k + '"]'); }
+  function node(key, val, depth, path) {
+    var pre = key === null ? '' : (typeof key === 'number' ? '<span class="tz">' + key + '</span>: ' : '<span class="tk">"' + VT.esc(key) + '"</span>: ');
+    if (val !== null && typeof val === 'object') {
+      var arr = Array.isArray(val), keys = arr ? val.map(function (_, i) { return i; }) : Object.keys(val);
+      var d = document.createElement('details'); d.open = depth < 2;
+      var s = document.createElement('summary');
+      s.innerHTML = pre + '<span class="tz">' + (arr ? '[ ' + keys.length + ' items ]' : '{ ' + keys.length + ' keys }') + '</span>';
+      d.appendChild(s); keys.forEach(function (k) { d.appendChild(node(k, val[k], depth + 1, pathOf(path, k))); }); return d;
+    }
+    var l = document.createElement('div'); l.className = 'leaf'; l.style.cursor = 'pointer'; l.title = 'Click to copy path';
+    var vh = typeof val === 'string' ? '<span class="ts">"' + VT.esc(val) + '"</span>' : val === null ? '<span class="tz">null</span>' : typeof val === 'boolean' ? '<span class="tb">' + val + '</span>' : '<span class="tn">' + val + '</span>';
+    l.innerHTML = pre + vh; l.addEventListener('click', function () { VT.copy(path, 'Copied path ' + path); }); return l;
+  }
+  function buildTree() {
+    var t = $('treeOut'); t.innerHTML = '';
+    if (parsedData === null) return;
+    if (stats(parsedData).nodes > 20000) { t.textContent = 'This JSON is too large for the tree view. Use the Text view.'; return; }
+    t.appendChild(node(null, parsedData, 0, '$'));
   }
 
-  document.getElementById('formatBtn').addEventListener('click', function () {
-    var r = parseOrError();
-    if (r.ok) {
-      result.textContent = JSON.stringify(r.value, null, 2);
-      meta.textContent = 'Valid JSON';
-    } else {
-      result.textContent = 'Invalid JSON:\n' + r.error;
-      meta.textContent = '';
+  function update() {
+    var raw = $('in').value;
+    if (!raw.trim()) {
+      $('status').className = 'out'; $('status').style.color = '#999'; $('status').textContent = 'Paste JSON to validate it instantly.';
+      $('codeOut').textContent = ''; $('treeOut').innerHTML = ''; $('stats').style.display = 'none'; current = ''; parsedData = null; return;
     }
-  });
+    var p; try { p = JSON.parse(raw); } catch (e) { showError(e, raw); return; }
+    var data = $('sort').checked ? sortKeys(p) : p; parsedData = data;
+    var minify = document.querySelector('input[name="mode"]:checked').value === 'minify';
+    var ind = $('indent').value === 'tab' ? '\t' : Number($('indent').value);
+    current = minify ? JSON.stringify(data) : JSON.stringify(data, null, ind);
+    var warn = /(^|[^"\w.])-?\d{16,}(?![\d.eE])/.test(raw) ? '\nNote: numbers above 9007199254740991 may lose precision in JavaScript.' : '';
+    $('status').className = 'out ok'; $('status').style.color = ''; $('status').textContent = 'Valid JSON' + warn;
+    $('codeOut').innerHTML = current.length > 400000 ? VT.esc(current) : hl(current);
+    var s = stats(data), bytes = new TextEncoder().encode(current).length;
+    $('stats').style.display = 'grid';
+    $('stats').innerHTML = [['Size', VT.bytes(bytes)], ['Lines', current.split('\n').length], ['Keys', s.keys], ['Objects', s.objects], ['Arrays', s.arrays], ['Depth', s.depth]]
+      .map(function (x) { return '<div class="stat"><b>' + x[1] + '</b><span>' + x[0] + '</span></div>'; }).join('');
+    if (view === 'tree') buildTree();
+  }
+  var live = VT.debounce(update, 200);
 
-  document.getElementById('minifyBtn').addEventListener('click', function () {
-    var r = parseOrError();
-    if (r.ok) {
-      var minified = JSON.stringify(r.value);
-      result.textContent = minified;
-      meta.textContent = minified.length + ' characters';
-    } else {
-      result.textContent = 'Invalid JSON:\n' + r.error;
-      meta.textContent = '';
+  function autofix(s) {
+    var segs = [], i = 0, n = s.length, buf = '';
+    function flush() { if (buf) { segs.push({ t: 0, s: buf }); buf = ''; } }
+    while (i < n) {
+      var c = s[i], c2 = s[i + 1];
+      if (c === '/' && c2 === '/') { while (i < n && s[i] !== '\n') i++; continue; }
+      if (c === '/' && c2 === '*') { i += 2; while (i < n && !(s[i] === '*' && s[i + 1] === '/')) i++; i += 2; continue; }
+      if (c === '"' || c === "'") {
+        flush(); var q = c, str = '', j = i + 1;
+        while (j < n && s[j] !== q) { if (s[j] === '\\' && j + 1 < n) { str += s[j] + s[j + 1]; j += 2; } else { str += s[j]; j++; } }
+        if (q === "'") str = str.replace(/\\'/g, "'").replace(/"/g, '\\"');
+        segs.push({ t: 1, s: '"' + str + '"' }); i = j + 1; continue;
+      }
+      buf += c; i++;
     }
-  });
+    flush();
+    return segs.map(function (g) {
+      return g.t ? g.s : g.s.replace(/([{,]\s*)([A-Za-z_$][\w$]*)(\s*:)/g, '$1"$2"$3').replace(/,(\s*[}\]])/g, '$1').replace(/\bundefined\b|\bNaN\b/g, 'null');
+    }).join('');
+  }
 
-  document.getElementById('clearBtn').addEventListener('click', function () {
-    input.value = '';
-    result.textContent = 'Formatted JSON will appear here.';
-    meta.textContent = '';
+  $('in').addEventListener('input', live);
+  $('indent').addEventListener('change', update);
+  $('sort').addEventListener('change', update);
+  document.querySelectorAll('input[name="mode"]').forEach(function (r) { r.addEventListener('change', update); });
+  $('sampleBtn').addEventListener('click', function () { $('in').value = JSON.stringify(SAMPLE); update(); });
+  $('clearBtn').addEventListener('click', function () { $('in').value = ''; update(); });
+  $('pasteBtn').addEventListener('click', function () {
+    if (!navigator.clipboard || !navigator.clipboard.readText) { VT.toast('Paste with Ctrl+V instead'); return; }
+    navigator.clipboard.readText().then(function (t) { $('in').value = t; update(); }, function () { VT.toast('Clipboard blocked. Paste with Ctrl+V'); });
   });
-
-  copyBtn.addEventListener('click', function () {
-    navigator.clipboard.writeText(result.textContent).then(function () {
-      copyBtn.classList.add('is-copied');
-      copyBtn.textContent = 'Copied!';
-      setTimeout(function () { copyBtn.classList.remove('is-copied'); copyBtn.textContent = 'Copy result'; }, 1500);
-    });
+  $('fileIn').addEventListener('change', function () {
+    var f = this.files[0]; if (!f) return;
+    if (f.size > 10 * 1048576) { VT.toast('File is larger than 10 MB'); return; }
+    var r = new FileReader(); r.onload = function () { $('in').value = r.result; update(); }; r.readAsText(f); this.value = '';
   });
+  $('fixBtn').addEventListener('click', function () {
+    var raw = $('in').value; if (!raw.trim()) return;
+    $('in').value = autofix(raw); update();
+    VT.toast($('status').classList.contains('ok') ? 'Fixed. JSON is now valid' : 'Applied fixes, but errors remain');
+  });
+  $('copyBtn').addEventListener('click', function () { if (current) VT.copy(current); else VT.toast('Nothing to copy yet'); });
+  $('dlBtn').addEventListener('click', function () {
+    if (!current) { VT.toast('Nothing to download yet'); return; }
+    VT.download(current, document.querySelector('input[name="mode"]:checked').value === 'minify' ? 'minified.json' : 'formatted.json', 'application/json');
+  });
+  VT.tabs($('viewTabs'), $('viewPanes'), function (t) { view = t; if (t === 'tree') buildTree(); });
+  $('expAll').addEventListener('click', function () { $('treeOut').querySelectorAll('details').forEach(function (d) { d.open = true; }); });
+  $('colAll').addEventListener('click', function () { $('treeOut').querySelectorAll('details').forEach(function (d) { d.open = false; }); });
 })();
   </script>
 </BaseLayout>

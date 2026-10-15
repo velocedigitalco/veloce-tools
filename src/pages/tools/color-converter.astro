@@ -9,33 +9,66 @@ const faqs = [
 ---
 <BaseLayout
   title="Free HEX to RGB / HSL Color Converter | Veloce Tools"
-  description="Convert HEX colors to RGB and HSL instantly, with a live preview swatch and color picker. Free, no signup."
+  description="Convert colors between HEX, RGB, HSL, HSV and CMYK, check WCAG contrast, and generate palettes. Includes a screen eyedropper. Free, no signup."
   jsonLd={[
     { '@context': 'https://schema.org', '@type': 'SoftwareApplication', name: 'Color Converter', applicationCategory: 'BrowserApplication', operatingSystem: 'Any', offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' } },
     { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
   ]}
 >
   <section class="section--tight">
-    <div class="tool-hero">
+<div class="tool-hero">
       <span class="eyebrow">Free tool</span>
-      <h1>Color Converter</h1>
-      <p>Convert between HEX, RGB, and HSL with a live preview.</p>
+      <h1>Color Converter &amp; Palette Generator</h1>
+      <p>Type any color (HEX, RGB, HSL or a name), pick one, or grab one from your screen. Get every format, check contrast for accessibility and generate matching palettes.</p>
     </div>
 
-    <div style="max-width:500px;">
-      <div class="swatch-row">
-        <div class="swatch" id="swatch" style="background:#4438ca;"></div>
-        <div class="field" style="flex:1; margin-bottom:0;">
-          <label for="colorPicker">Pick a color</label>
-          <input type="color" id="colorPicker" value="#4438ca" style="height:46px; width:100%; padding:4px;" />
+    <div class="tool-columns">
+      <div>
+        <div class="swatch-row" style="margin-bottom:14px;">
+          <div class="swatch" id="swatch" style="width:88px;height:88px;"></div>
+          <div style="flex:1;">
+            <div class="field" style="margin-bottom:10px;">
+              <label for="txt">Color value (HEX, RGB, HSL or name)</label>
+              <input id="txt" type="text" class="mono" value="#4438CA" spellcheck="false" />
+            </div>
+            <div class="actions" style="margin:0;">
+              <input type="color" id="pick" value="#4438ca" style="height:38px;width:56px;padding:3px;border:1px solid #ddd;border-radius:9px;background:#fff;" aria-label="Color picker" />
+              <button type="button" class="mini hidden" id="eye">Pick from screen</button>
+              <button type="button" class="mini" id="rand">Random color</button>
+            </div>
+          </div>
         </div>
+        <div class="slider-row">
+          <div class="slider-top"><span>Opacity</span><strong id="aV">100%</strong></div>
+          <input type="range" id="alpha" min="0" max="100" value="100" />
+        </div>
+        <div class="panel" id="formats" style="padding:8px 18px;"></div>
+        <p class="tool-label" style="margin-top:20px;">Recent colors</p>
+        <div class="swatch-grid" id="recent"></div>
       </div>
-      <div class="field">
-        <label for="hexInput">HEX</label>
-        <input id="hexInput" type="text" value="#4438CA" />
+
+      <div>
+        <p class="tool-label">Accessibility contrast</p>
+        <div class="opt-grid" style="margin-bottom:12px;">
+          <div class="panel" id="onW" style="padding:14px;border-radius:14px;text-align:center;"></div>
+          <div class="panel" id="onB" style="padding:14px;border-radius:14px;text-align:center;"></div>
+        </div>
+        <div class="panel" id="wcag" style="padding:8px 18px;"></div>
+
+        <p class="tool-label" style="margin-top:24px;">Palette</p>
+        <div class="tabs" id="palTabs">
+          <button type="button" class="active" data-t="shades">Shades</button>
+          <button type="button" data-t="tints">Tints</button>
+          <button type="button" data-t="comp">Complementary</button>
+          <button type="button" data-t="analog">Analogous</button>
+          <button type="button" data-t="triad">Triadic</button>
+          <button type="button" data-t="split">Split</button>
+          <button type="button" data-t="tetra">Tetradic</button>
+        </div>
+        <div class="swatch-grid" id="palette"></div>
+        <p class="hint">Click a swatch to use it and copy its HEX value.</p>
+        <div class="actions"><button type="button" class="mini dark" id="copyPal">Copy palette as CSS variables</button></div>
       </div>
-      <div class="result-box" id="colorResult" style="font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:14px; line-height:1.8;"></div>
-      <button type="button" class="copy-btn" id="copyBtn" style="margin-top:10px;">Copy all</button>
     </div>
   </section>
 
@@ -66,67 +99,94 @@ const faqs = [
 
   <script slot="body-end" is:inline>
 (function () {
-  var picker = document.getElementById('colorPicker');
-  var hexInput = document.getElementById('hexInput');
-  var swatch = document.getElementById('swatch');
-  var result = document.getElementById('colorResult');
-  var copyBtn = document.getElementById('copyBtn');
+  var $ = function (id) { return document.getElementById(id); };
+  var c = { r: 68, g: 56, b: 202, a: 1 }, recent = [], pal = 'shades', palCols = [];
 
-  function hexToRgb(hex) {
-    hex = hex.replace('#', '');
-    if (hex.length === 3) hex = hex.split('').map(function (c) { return c + c; }).join('');
-    if (!/^[0-9a-fA-F]{6}$/.test(hex)) return null;
-    return {
-      r: parseInt(hex.substring(0, 2), 16),
-      g: parseInt(hex.substring(2, 4), 16),
-      b: parseInt(hex.substring(4, 6), 16),
-    };
+  function clamp(n, a, b) { return Math.min(b, Math.max(a, n)); }
+  function hex2(n) { return Math.round(n).toString(16).padStart(2, '0'); }
+  function toHex(x) { return '#' + hex2(x.r) + hex2(x.g) + hex2(x.b); }
+  function rgb2hsl(r, g, b) {
+    r /= 255; g /= 255; b /= 255; var mx = Math.max(r, g, b), mn = Math.min(r, g, b), h = 0, s = 0, l = (mx + mn) / 2, d = mx - mn;
+    if (d) { s = l > .5 ? d / (2 - mx - mn) : d / (mx + mn); h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; }
+    return [h, s * 100, l * 100];
+  }
+  function hsl2rgb(h, s, l) {
+    h = ((h % 360) + 360) % 360; s = clamp(s, 0, 100) / 100; l = clamp(l, 0, 100) / 100;
+    var k = function (n) { return (n + h / 30) % 12; }, a = s * Math.min(l, 1 - l), f = function (n) { return l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1))); };
+    return { r: f(0) * 255, g: f(8) * 255, b: f(4) * 255 };
+  }
+  function rgb2hsv(r, g, b) {
+    r /= 255; g /= 255; b /= 255; var mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn, h = rgb2hsl(r * 255, g * 255, b * 255)[0];
+    return [h, mx ? d / mx * 100 : 0, mx * 100];
+  }
+  function rgb2cmyk(r, g, b) {
+    r /= 255; g /= 255; b /= 255; var k = 1 - Math.max(r, g, b); if (k === 1) return [0, 0, 0, 100];
+    return [(1 - r - k) / (1 - k) * 100, (1 - g - k) / (1 - k) * 100, (1 - b - k) / (1 - k) * 100, k * 100];
+  }
+  function lum(x) { var f = function (v) { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }; return .2126 * f(x.r) + .7152 * f(x.g) + .0722 * f(x.b); }
+  function ratio(a, b) { var l1 = lum(a), l2 = lum(b); return (Math.max(l1, l2) + .05) / (Math.min(l1, l2) + .05); }
+  function textOn(x) { return lum(x) > .4 ? '#111' : '#fff'; }
+
+  /* universal parser: uses the browser's own CSS color parser, so names, hex, rgb() and hsl() all work */
+  var cv = document.createElement('canvas').getContext('2d');
+  function parse(str) {
+    str = str.trim(); if (!str) return null;
+    if (/^[0-9a-f]{3,8}$/i.test(str)) str = '#' + str;
+    cv.fillStyle = '#000'; cv.fillStyle = str; var a = cv.fillStyle; cv.fillStyle = '#fff'; cv.fillStyle = str; var b = cv.fillStyle;
+    if (a !== b) return null;
+    var m = a.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
+    if (m) return { r: parseInt(m[1], 16), g: parseInt(m[2], 16), b: parseInt(m[3], 16), a: 1 };
+    m = a.match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?/);
+    return m ? { r: +m[1], g: +m[2], b: +m[3], a: m[4] === undefined ? 1 : +m[4] } : null;
   }
 
-  function rgbToHsl(r, g, b) {
-    r /= 255; g /= 255; b /= 255;
-    var max = Math.max(r, g, b), min = Math.min(r, g, b);
-    var h, s, l = (max + min) / 2;
-    if (max === min) { h = s = 0; }
-    else {
-      var d = max - min;
-      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-      switch (max) {
-        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-        case g: h = (b - r) / d + 2; break;
-        default: h = (r - g) / d + 4;
-      }
-      h /= 6;
-    }
-    return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
+  function row(l, v) { return '<div class="rowline"><div class="lbl">' + l + '</div><div class="val">' + VT.esc(v) + '</div><button type="button" class="mini" data-v="' + VT.esc(v) + '">Copy</button></div>'; }
+  function render(skipText) {
+    var hx = toHex(c).toUpperCase(), hsl = rgb2hsl(c.r, c.g, c.b), hsv = rgb2hsv(c.r, c.g, c.b), cmyk = rgb2cmyk(c.r, c.g, c.b), R = Math.round, a = +c.a.toFixed(2);
+    $('swatch').style.background = 'linear-gradient(' + 'rgba(' + R(c.r) + ',' + R(c.g) + ',' + R(c.b) + ',' + a + '),' + 'rgba(' + R(c.r) + ',' + R(c.g) + ',' + R(c.b) + ',' + a + ')), repeating-conic-gradient(#ddd 0 25%, #fff 0 50%) 50% / 14px 14px';
+    $('pick').value = toHex(c); if (!skipText) $('txt').value = hx;
+    var ha = hx + hex2(c.a * 255).toUpperCase();
+    $('formats').innerHTML = row('HEX', hx) + row('HEXA', ha) + row('RGB', 'rgb(' + R(c.r) + ', ' + R(c.g) + ', ' + R(c.b) + ')') + row('RGBA', 'rgba(' + R(c.r) + ', ' + R(c.g) + ', ' + R(c.b) + ', ' + a + ')') +
+      row('HSL', 'hsl(' + R(hsl[0]) + ', ' + R(hsl[1]) + '%, ' + R(hsl[2]) + '%)') + row('HSLA', 'hsla(' + R(hsl[0]) + ', ' + R(hsl[1]) + '%, ' + R(hsl[2]) + '%, ' + a + ')') +
+      row('HSV', 'hsv(' + R(hsv[0]) + ', ' + R(hsv[1]) + '%, ' + R(hsv[2]) + '%)') + row('CMYK', 'cmyk(' + R(cmyk[0]) + '%, ' + R(cmyk[1]) + '%, ' + R(cmyk[2]) + '%, ' + R(cmyk[3]) + '%)') + row('CSS var', '--color: ' + hx + ';');
+    contrast(); palette();
   }
-
-  function update(hex) {
-    var rgb = hexToRgb(hex);
-    if (!rgb) { result.textContent = 'Enter a valid 6-character HEX color.'; return; }
-    var hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
-    var hexClean = '#' + [rgb.r, rgb.g, rgb.b].map(function (v) { return v.toString(16).padStart(2, '0'); }).join('').toUpperCase();
-    swatch.style.background = hexClean;
-    result.textContent =
-      'HEX: ' + hexClean + '\n' +
-      'RGB: rgb(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ')\n' +
-      'HSL: hsl(' + hsl.h + ', ' + hsl.s + '%, ' + hsl.l + '%)';
+  function contrast() {
+    var W = { r: 255, g: 255, b: 255 }, B = { r: 0, g: 0, b: 0 };
+    $('onW').style.background = '#fff'; $('onW').innerHTML = '<strong style="color:' + toHex(c) + ';font-size:20px;">Aa</strong><div style="color:' + toHex(c) + ';font-size:12px;">on white</div>';
+    $('onB').style.background = '#000'; $('onB').innerHTML = '<strong style="color:' + toHex(c) + ';font-size:20px;">Aa</strong><div style="color:' + toHex(c) + ';font-size:12px;">on black</div>';
+    var rw = ratio(c, W), rb = ratio(c, B), b = function (ok) { return '<span class="badge ' + (ok ? 'pass' : 'fail') + '">' + (ok ? 'Pass' : 'Fail') + '</span>'; };
+    function line(n, r) { return '<div class="rowline"><div class="lbl" style="width:84px;">' + n + '</div><div class="val">' + r.toFixed(2) + ':1</div><div>AA text ' + b(r >= 4.5) + ' AA large ' + b(r >= 3) + ' AAA ' + b(r >= 7) + '</div></div>'; }
+    $('wcag').innerHTML = line('vs white', rw) + line('vs black', rb);
   }
+  function mix(x, y, t) { return { r: x.r + (y.r - x.r) * t, g: x.g + (y.g - x.g) * t, b: x.b + (y.b - x.b) * t }; }
+  function palette() {
+    var h = rgb2hsl(c.r, c.g, c.b), cols = [], rot = function (d) { return hsl2rgb(h[0] + d, h[1], h[2]); };
+    if (pal === 'shades') for (var i = 0; i < 9; i++) cols.push(mix(c, { r: 0, g: 0, b: 0 }, i / 9 * .9));
+    else if (pal === 'tints') for (var j = 0; j < 9; j++) cols.push(mix(c, { r: 255, g: 255, b: 255 }, j / 9 * .9));
+    else cols = ({ comp: [0, 180], analog: [-60, -30, 0, 30, 60], triad: [0, 120, 240], split: [0, 150, 210], tetra: [0, 90, 180, 270] })[pal].map(rot);
+    palCols = cols.map(toHex);
+    $('palette').innerHTML = cols.map(function (x) { var hx = toHex(x); return '<div class="sw" data-c="' + hx + '" style="background:' + hx + ';color:' + textOn(x) + ';">' + hx.slice(1).toUpperCase() + '</div>'; }).join('');
+  }
+  function remember() {
+    var h = toHex(c); recent = [h].concat(recent.filter(function (x) { return x !== h; })).slice(0, 10);
+    $('recent').innerHTML = recent.map(function (x) { return '<div class="sw" data-c="' + x + '" style="background:' + x + ';width:40px;height:40px;" title="' + x + '"></div>'; }).join('');
+  }
+  var rememberSoon = VT.debounce(remember, 600);
+  function set(x, skipText, keepAlpha) { c = { r: clamp(x.r, 0, 255), g: clamp(x.g, 0, 255), b: clamp(x.b, 0, 255), a: keepAlpha ? c.a : (x.a === undefined ? 1 : x.a) }; $('alpha').value = Math.round(c.a * 100); $('aV').textContent = Math.round(c.a * 100) + '%'; render(skipText); rememberSoon(); }
 
-  picker.addEventListener('input', function () { hexInput.value = picker.value; update(picker.value); });
-  hexInput.addEventListener('input', function () {
-    update(hexInput.value);
-    var rgb = hexToRgb(hexInput.value);
-    if (rgb) picker.value = '#' + [rgb.r, rgb.g, rgb.b].map(function (v) { return v.toString(16).padStart(2, '0'); }).join('');
+  $('txt').addEventListener('input', function () { var p = parse($('txt').value); $('txt').style.borderColor = p || !$('txt').value ? '' : '#b3261e'; if (p) set(p, true); });
+  $('pick').addEventListener('input', function () { set(parse($('pick').value), false, true); });
+  $('alpha').addEventListener('input', function () { c.a = Number($('alpha').value) / 100; $('aV').textContent = $('alpha').value + '%'; render(true); });
+  $('rand').addEventListener('click', function () { set({ r: Math.random() * 256, g: Math.random() * 256, b: Math.random() * 256 }, false, true); });
+  if (window.EyeDropper) { $('eye').classList.remove('hidden'); $('eye').addEventListener('click', function () { new EyeDropper().open().then(function (r) { set(parse(r.sRGBHex), false, true); }).catch(function () {}); }); }
+  document.addEventListener('click', function (e) {
+    var v = e.target.closest('[data-v]'); if (v) { VT.copy(v.getAttribute('data-v')); return; }
+    var s = e.target.closest('.sw[data-c]'); if (s) { var hx = s.getAttribute('data-c'); set(parse(hx), false, true); VT.copy(hx.toUpperCase(), 'Copied ' + hx.toUpperCase()); }
   });
-  copyBtn.addEventListener('click', function () {
-    navigator.clipboard.writeText(result.textContent).then(function () {
-      copyBtn.classList.add('is-copied'); copyBtn.textContent = 'Copied!';
-      setTimeout(function () { copyBtn.classList.remove('is-copied'); copyBtn.textContent = 'Copy all'; }, 1500);
-    });
-  });
-
-  update('#4438CA');
+  VT.tabs($('palTabs'), document.createElement('div'), function (t) { pal = t; palette(); });
+  $('copyPal').addEventListener('click', function () { VT.copy(':root {\n' + palCols.map(function (h, i) { return '  --color-' + (i + 1) + ': ' + h + ';'; }).join('\n') + '\n}', 'Palette CSS copied'); });
+  render(false); remember();
 })();
   </script>
 </BaseLayout>

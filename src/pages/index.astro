@@ -2,24 +2,24 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 
 const tools = [
-  { href: '/tools/seo-meta-tag-generator', icon: '◎', title: 'SEO Meta Tag Generator', desc: 'Write an optimized title and description, and preview a live Google search result.' },
-  { href: '/tools/qr-code-generator', icon: '⌁', title: 'QR Code Generator', desc: 'Create downloadable QR codes for URLs, text and everyday sharing.' },
-  { href: '/tools/image-compressor', icon: '◌', title: 'Image Compressor', desc: 'Reduce image size directly in your browser before uploading or sharing.' },
-  { href: '/tools/image-converter', icon: '◫', title: 'Image Converter', desc: 'Convert images between PNG, JPEG and WebP without installing anything.' },
-  { href: '/tools/json-formatter', icon: '{ }', title: 'JSON Formatter', desc: 'Format, validate and make messy JSON readable in one click.' },
-  { href: '/tools/password-generator', icon: '✦', title: 'Password Generator', desc: 'Generate strong passwords locally in your browser. Nothing needs to leave your device.' },
-  { href: '/tools/text-counter', icon: 'Aa', title: 'Text Counter', desc: 'Count characters, words, lines and paragraphs instantly.' },
-  { href: '/tools/uuid-generator', icon: '#', title: 'UUID Generator', desc: 'Generate random UUIDs instantly for development, testing and data work.' },
-  { href: '/tools/base64-encoder-decoder', icon: '↔', title: 'Base64 Tool', desc: 'Encode and decode Base64 text quickly without sending your content to a server.' },
-  { href: '/tools/url-encoder-decoder', icon: '↗', title: 'URL Encoder', desc: 'Encode or decode URLs and query strings without leaving your browser.' },
-  { href: '/tools/timestamp-converter', icon: '◷', title: 'Timestamp Converter', desc: 'Convert Unix timestamps to readable dates and generate timestamps from dates.' },
-  { href: '/tools/hash-generator', icon: '#', title: 'Hash Generator', desc: 'Generate SHA-1/256/384/512 hashes directly using your browser\'s Web Crypto API.' },
-  { href: '/tools/color-converter', icon: '◉', title: 'Color Converter', desc: 'Convert HEX colors into RGB and HSL values and preview the result instantly.' },
+  { href: '/tools/seo-meta-tag-generator', icon: '◎', title: 'SEO Meta Tag Generator', desc: 'Pixel-width meters, Google desktop, mobile and social previews, and copy-ready tags.' },
+  { href: '/tools/qr-code-generator', icon: '⌁', title: 'QR Code Generator', desc: 'Links, WhatsApp, Wi-Fi and contacts. Style it, then export PNG or SVG.' },
+  { href: '/tools/image-compressor', icon: '◌', title: 'Image Compressor', desc: 'Batch compress with presets, resize and a before/after slider. Download as ZIP.' },
+  { href: '/tools/image-converter', icon: '◫', title: 'Image Converter', desc: 'Batch convert PNG, JPEG, WebP and AVIF. Resize, rotate and flip as you go.' },
+  { href: '/tools/json-formatter', icon: '{ }', title: 'JSON Formatter', desc: 'Live validation, tree view, sort keys, minify and auto-fix common mistakes.' },
+  { href: '/tools/password-generator', icon: '✦', title: 'Password Generator', desc: 'Random passwords, passphrases and PINs with real entropy-based strength.' },
+  { href: '/tools/text-counter', icon: 'Aa', title: 'Text Counter', desc: 'Live counts, platform limits, keyword density and quick text clean-up.' },
+  { href: '/tools/uuid-generator', icon: '#', title: 'UUID Generator', desc: 'v4, time-ordered v7 or nil. Bulk generate, any format, plus a validator.' },
+  { href: '/tools/base64-encoder-decoder', icon: '↔', title: 'Base64 Tool', desc: 'Text, files and images. URL-safe mode, data URIs and previews.' },
+  { href: '/tools/url-encoder-decoder', icon: '↗', title: 'URL Encoder', desc: 'Encode, decode, parse any link into parts, or build a query string.' },
+  { href: '/tools/timestamp-converter', icon: '◷', title: 'Timestamp Converter', desc: 'Any timezone, auto-detects seconds to nanoseconds, converts whole lists.' },
+  { href: '/tools/hash-generator', icon: '#', title: 'Hash Generator', desc: 'MD5 and SHA family at once, HMAC, file hashing and a hash verifier.' },
+  { href: '/tools/color-converter', icon: '◉', title: 'Color Converter', desc: 'HEX, RGB, HSL, CMYK, contrast checks, palettes and a screen eyedropper.' },
 ];
 ---
 <BaseLayout
   title="Veloce Tools — Useful tools. Beautifully simple."
-  description="Veloce Tools is a collection of fast, privacy-friendly digital tools for everyday work: QR codes, image compression, JSON formatting, password generation, and more."
+  description="Free, private tools: QR codes, image compression, JSON formatting, password generator, hashing, SEO meta tags and more. No signup, runs in your browser."
   jsonLd={{
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
@@ -27,7 +27,7 @@ const tools = [
     description: 'Free, privacy-friendly digital tools for everyday work.',
   }}
 >
-  <script slot="head" src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script slot="head" src="/js/qrcode.js"></script>
 
   <!-- ===================== HERO ===================== -->
   <header class="hero">
@@ -67,7 +67,7 @@ const tools = [
           <button onclick="generateQR()">Create</button>
         </div>
         <div class="qr-result" id="qrResult">
-          <div id="qrcode"></div>
+          <canvas id="qrcode" width="460" height="460"></canvas>
           <button class="qr-download" onclick="downloadQR()">Download PNG</button>
         </div>
       </div>
@@ -132,33 +132,18 @@ const tools = [
   </section>
 
   <script slot="body-end" is:inline>
-let qrInstance = null;
-
 function generateQR() {
   const value = document.getElementById("qrInput").value.trim();
   if (!value) return;
-  const container = document.getElementById("qrcode");
-  container.innerHTML = "";
-  qrInstance = new QRCode(container, {
-    text: value, width: 200, height: 200,
-    colorDark: "#111111", colorLight: "#ffffff",
-    correctLevel: QRCode.CorrectLevel.H
-  });
+  try {
+    const q = VT.qrMatrix(value, "Q");
+    VT.qrDraw(document.getElementById("qrcode"), q, 400, 30, "#111111", "#ffffff");
+  } catch (e) { VT.toast("That is too long for a QR code"); return; }
   document.getElementById("qrResult").style.display = "block";
 }
 
 function downloadQR() {
-  const container = document.getElementById("qrcode");
-  const canvas = container.querySelector("canvas");
-  const image = container.querySelector("img");
-  let url = "";
-  if (canvas) url = canvas.toDataURL("image/png");
-  else if (image) url = image.src;
-  if (!url) return;
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "veloce-qr.png";
-  link.click();
+  document.getElementById("qrcode").toBlob(function (b) { VT.download(b, "veloce-qr.png"); });
 }
 
 document.getElementById("qrInput").addEventListener("keydown", function (e) {

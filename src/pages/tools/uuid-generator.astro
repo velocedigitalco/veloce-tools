@@ -8,29 +8,72 @@ const faqs = [
 ];
 ---
 <BaseLayout
-  title="Free UUID Generator (v4) — Generate Multiple Instantly | Veloce Tools"
-  description="Generate random UUID v4 identifiers instantly, one or many at once. Free, no signup, runs entirely in your browser."
+  title="Free UUID Generator (v4, v7) and Validator | Veloce Tools"
+  description="Generate UUID v4, time-ordered v7 or nil UUIDs in bulk, in any format, and validate any UUID. Export as text or JSON. Free, runs in your browser."
   jsonLd={[
     { '@context': 'https://schema.org', '@type': 'SoftwareApplication', name: 'UUID Generator', applicationCategory: 'BrowserApplication', operatingSystem: 'Any', offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' } },
     { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
   ]}
 >
   <section class="section--tight">
-    <div class="tool-hero">
+<div class="tool-hero">
       <span class="eyebrow">Free tool</span>
       <h1>UUID Generator</h1>
-      <p>Generate one or many random UUID v4 identifiers, ready to copy.</p>
+      <p>Generate UUID v4, time-ordered v7, or nil UUIDs in bulk. Choose the format, export as text or JSON, and validate any UUID.</p>
     </div>
 
-    <div style="max-width:600px;">
-      <div class="slider-row">
-        <div class="slider-top"><span>How many</span><strong id="countValue">5</strong></div>
-        <input type="range" id="count" min="1" max="20" value="5" />
-      </div>
-      <button type="button" class="primary-button" id="generateBtn" style="width:100%; border:none; text-align:center;">Generate</button>
+    <div class="tool-columns">
+      <div>
+        <p class="tool-label">Version</p>
+        <div class="chips" id="vers">
+          <button type="button" class="chip active" data-v="4">v4 &middot; random</button>
+          <button type="button" class="chip" data-v="7">v7 &middot; time-ordered</button>
+          <button type="button" class="chip" data-v="0">Nil</button>
+        </div>
+        <p class="hint" id="verHint" style="margin:-6px 0 16px;">v4 is the most widely used: 122 random bits, no meaning, no ordering.</p>
 
-      <div class="uuid-list" id="uuidList" style="margin-top:20px;"></div>
-      <button type="button" class="secondary-button" id="copyAllBtn" style="width:100%; margin-top:14px; text-align:center;">Copy all</button>
+        <div class="opt-grid">
+          <div class="field">
+            <label for="count">How many (1 to 1000)</label>
+            <input type="number" id="count" min="1" max="1000" value="10" />
+          </div>
+          <div class="field">
+            <label for="fmt">Format</label>
+            <select id="fmt">
+              <option value="std">Standard (lowercase)</option>
+              <option value="upper">UPPERCASE</option>
+              <option value="nohy">No hyphens</option>
+              <option value="brace">In braces</option>
+              <option value="urn">URN (urn:uuid:...)</option>
+              <option value="sql">Quoted for SQL / code</option>
+            </select>
+          </div>
+        </div>
+        <div class="chips">
+          <button type="button" class="chip" data-n="1">1</button>
+          <button type="button" class="chip" data-n="10">10</button>
+          <button type="button" class="chip" data-n="50">50</button>
+          <button type="button" class="chip" data-n="100">100</button>
+        </div>
+        <button type="button" class="primary-button" id="gen" style="width:100%;border:none;text-align:center;">Generate</button>
+
+        <div class="panel" style="margin-top:24px;">
+          <p class="tool-label">Validate a UUID</p>
+          <div class="field" style="margin-bottom:10px;"><input id="vin" type="text" placeholder="Paste a UUID to check it" class="mono" /></div>
+          <div class="out" id="vout" style="color:#999;">Version, variant and timestamp (v1/v7) are decoded here.</div>
+        </div>
+      </div>
+
+      <div>
+        <p class="tool-label">Results <span id="resCount" style="text-transform:none;letter-spacing:0;"></span></p>
+        <div class="panel linelist" id="list" style="max-height:460px;overflow:auto;padding:10px;"></div>
+        <p class="hint">Click any line to copy it.</p>
+        <div class="actions">
+          <button type="button" class="primary-button" id="copyAll" style="border:none;">Copy all</button>
+          <button type="button" class="secondary-button" id="dlTxt">Download .txt</button>
+          <button type="button" class="secondary-button" id="dlJson">Download .json</button>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -61,54 +104,71 @@ const faqs = [
 
   <script slot="body-end" is:inline>
 (function () {
-  var countInput = document.getElementById('count');
-  var countValue = document.getElementById('countValue');
-  var list = document.getElementById('uuidList');
-  var current = [];
+  var $ = function (id) { return document.getElementById(id); };
+  var ver = '4', list = [], lastMs = 0;
+  var HINT = { '4': 'v4 is the most widely used: 122 random bits, no meaning, no ordering.',
+    '7': 'v7 starts with a millisecond timestamp, so UUIDs sort by creation time. Great for database primary keys.',
+    '0': 'The nil UUID is all zeros. Handy as a placeholder or "no value" marker.' };
 
-  function makeUUID() {
-    if (crypto.randomUUID) return crypto.randomUUID();
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-      var r = Math.random() * 16 | 0;
-      var v = c === 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
-    });
+  function hex(b) {
+    var h = Array.from(b, function (x) { return x.toString(16).padStart(2, '0'); }).join('');
+    return h.slice(0, 8) + '-' + h.slice(8, 12) + '-' + h.slice(12, 16) + '-' + h.slice(16, 20) + '-' + h.slice(20);
+  }
+  function make() {
+    var b = new Uint8Array(16);
+    if (ver === '0') return hex(b);
+    crypto.getRandomValues(b);
+    if (ver === '7') {
+      var ts = Date.now(); if (ts <= lastMs) ts = lastMs + 1; lastMs = ts;
+      for (var i = 5; i >= 0; i--) { b[i] = ts % 256; ts = Math.floor(ts / 256); }
+    }
+    b[6] = (b[6] & 0x0f) | (Number(ver) << 4); b[8] = (b[8] & 0x3f) | 0x80;
+    return hex(b);
+  }
+  function fmt(u) {
+    switch ($('fmt').value) {
+      case 'upper': return u.toUpperCase(); case 'nohy': return u.replace(/-/g, '');
+      case 'brace': return '{' + u + '}'; case 'urn': return 'urn:uuid:' + u; case 'sql': return "'" + u + "'";
+      default: return u;
+    }
+  }
+  function gen() {
+    var n = Math.max(1, Math.min(1000, Number($('count').value) || 1)); lastMs = 0;
+    var raw = []; for (var i = 0; i < n; i++) raw.push(make());
+    list = raw.map(fmt);
+    $('list').innerHTML = list.map(function (u, i) { return '<div class="ln" data-i="' + i + '">' + VT.esc(u) + '</div>'; }).join('');
+    $('resCount').textContent = '(' + n + ')';
+  }
+  function validate() {
+    var v = $('vin').value.trim().replace(/^urn:uuid:/i, '').replace(/^\{|\}$/g, ''), o = $('vout');
+    if (!v) { o.className = 'out'; o.style.color = '#999'; o.textContent = 'Version, variant and timestamp (v1/v7) are decoded here.'; return; }
+    o.style.color = '';
+    var h = v.replace(/-/g, '');
+    if (!/^[0-9a-f]{32}$/i.test(h) || (v.indexOf('-') > -1 && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v))) { o.className = 'out err'; o.textContent = 'Not a valid UUID. Expected 32 hex digits, usually grouped 8-4-4-4-12.'; return; }
+    var version = parseInt(h[12], 16), vr = parseInt(h[16], 16), variant = (vr & 8) === 0 ? 'NCS (legacy)' : (vr & 4) === 0 ? 'RFC 4122 / 9562' : (vr & 2) === 0 ? 'Microsoft (legacy)' : 'Reserved';
+    var t = 'Valid UUID\nVersion: ' + (h === '0'.repeat(32) ? 'nil' : version) + '\nVariant: ' + variant;
+    if (version === 7) { t += '\nCreated: ' + new Date(parseInt(h.slice(0, 12), 16)).toISOString(); }
+    if (version === 1) {
+      var ts = (BigInt('0x' + h.slice(13, 16) + h.slice(8, 12) + h.slice(0, 8)));
+      t += '\nCreated: ' + new Date(Number(ts / 10000n) - 12219292800000).toISOString();
+    }
+    o.className = 'out ok mono'; o.textContent = t;
   }
 
-  function render() {
-    var n = Number(countInput.value);
-    countValue.textContent = n;
-    current = Array.from({ length: n }, makeUUID);
-    list.innerHTML = current.map(function (id, i) {
-      return '<div class="uuid-row"><div class="result-box">' + id + '</div>' +
-        '<button type="button" class="copy-btn" data-i="' + i + '">Copy</button></div>';
-    }).join('');
-  }
-
-  countInput.addEventListener('input', function () { countValue.textContent = countInput.value; });
-  document.getElementById('generateBtn').addEventListener('click', render);
-
-  list.addEventListener('click', function (e) {
-    var btn = e.target.closest('.copy-btn');
-    if (!btn) return;
-    var i = Number(btn.dataset.i);
-    navigator.clipboard.writeText(current[i]).then(function () {
-      var original = btn.textContent;
-      btn.textContent = 'Copied!';
-      btn.classList.add('is-copied');
-      setTimeout(function () { btn.textContent = original; btn.classList.remove('is-copied'); }, 1200);
+  document.querySelectorAll('#vers .chip').forEach(function (b) {
+    b.addEventListener('click', function () {
+      ver = b.getAttribute('data-v'); $('verHint').textContent = HINT[ver];
+      document.querySelectorAll('#vers .chip').forEach(function (x) { x.classList.toggle('active', x === b); }); gen();
     });
   });
-
-  document.getElementById('copyAllBtn').addEventListener('click', function () {
-    navigator.clipboard.writeText(current.join('\n'));
-    var btn = document.getElementById('copyAllBtn');
-    var original = btn.textContent;
-    btn.textContent = 'Copied all!';
-    setTimeout(function () { btn.textContent = original; }, 1200);
-  });
-
-  render();
+  document.querySelectorAll('[data-n]').forEach(function (b) { b.addEventListener('click', function () { $('count').value = b.getAttribute('data-n'); gen(); }); });
+  $('gen').addEventListener('click', gen); $('count').addEventListener('change', gen); $('fmt').addEventListener('change', gen);
+  $('list').addEventListener('click', function (e) { var l = e.target.closest('.ln'); if (l) VT.copy(list[Number(l.getAttribute('data-i'))], 'UUID copied'); });
+  $('copyAll').addEventListener('click', function () { VT.copy(list.join('\n'), list.length + ' UUIDs copied'); });
+  $('dlTxt').addEventListener('click', function () { VT.download(list.join('\n'), 'uuids.txt'); });
+  $('dlJson').addEventListener('click', function () { VT.download(JSON.stringify(list, null, 2), 'uuids.json', 'application/json'); });
+  $('vin').addEventListener('input', validate);
+  gen();
 })();
   </script>
 </BaseLayout>

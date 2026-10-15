@@ -21,8 +21,8 @@ const faqs = [
 ];
 ---
 <BaseLayout
-  title="Free SEO Meta Tag Generator (with Live Google Preview) | Veloce Tools"
-  description="Generate an optimized meta title, description, and Open Graph tags for any page. See a live Google search preview and copy the ready-made HTML — free, no signup."
+  title="Free SEO Meta Tag Generator with Google Preview | Veloce Tools"
+  description="Generate meta title, description, Open Graph and Twitter tags with pixel-width meters and live Google desktop, mobile and social previews. Free, no signup."
   jsonLd={[
     {
       '@context': 'https://schema.org',
@@ -45,52 +45,85 @@ const faqs = [
   ]}
 >
   <section class="section--tight">
-    <div class="tool-hero">
+<div class="tool-hero">
       <span class="eyebrow">Free tool</span>
       <h1>SEO Meta Tag Generator</h1>
-      <p>Write your title and description, watch a live Google preview update as you type, then copy the finished HTML into your page's &lt;head&gt;.</p>
+      <p>Write your title and description with live pixel-width meters, preview how they look on Google (desktop and mobile) and on social shares, then copy the finished tags.</p>
+    </div>
+
+    <div class="actions" style="margin-top:0;">
+      <button type="button" class="mini" id="example">Load example</button>
+      <button type="button" class="mini" id="reset">Reset</button>
     </div>
 
     <div class="mtg">
       <div>
         <div class="field">
-          <label for="mtg-title">Page title</label>
-          <input id="mtg-title" type="text" maxlength="120" placeholder="e.g. Affordable Web Design in Lahore | Veloce Digital" />
-          <span class="count" id="mtg-title-count">0 / 60</span>
+          <label for="title">Page title</label>
+          <input id="title" type="text" maxlength="160" placeholder="e.g. Affordable Web Design in Lahore | Veloce Digital" />
+          <div class="progress" id="tBar"><div></div></div>
+          <span class="count" id="tCount">0 chars &middot; 0 / 600 px</span>
         </div>
         <div class="field">
-          <label for="mtg-desc">Meta description</label>
-          <textarea id="mtg-desc" maxlength="300" placeholder="A one- to two-sentence summary of the page, written to make someone want to click."></textarea>
-          <span class="count" id="mtg-desc-count">0 / 160</span>
+          <label for="desc">Meta description</label>
+          <textarea id="desc" maxlength="400" placeholder="A one- to two-sentence summary, written to make someone want to click." style="min-height:96px;"></textarea>
+          <div class="progress" id="dBar"><div></div></div>
+          <span class="count" id="dCount">0 chars &middot; 0 / 920 px</span>
         </div>
         <div class="field">
-          <label for="mtg-url">Page URL</label>
-          <input id="mtg-url" type="text" placeholder="https://example.com/page" />
+          <label for="url">Page URL</label>
+          <input id="url" type="text" placeholder="https://example.com/page" />
         </div>
-        <div class="field">
-          <label for="mtg-site">Site name <span class="optional">(optional, used for Open Graph)</span></label>
-          <input id="mtg-site" type="text" placeholder="e.g. Veloce Digital" />
+        <div class="opt-grid">
+          <div class="field"><label for="site">Site name <span class="optional">(optional)</span></label><input id="site" type="text" placeholder="Veloce Digital" /></div>
+          <div class="field"><label for="tw">X / Twitter handle <span class="optional">(optional)</span></label><input id="tw" type="text" placeholder="@velocedigital" /></div>
         </div>
-        <button type="button" class="secondary-button" id="mtg-reset" style="width:100%; text-align:center;">Reset</button>
+        <div class="field"><label for="img">Share image URL <span class="optional">(optional, 1200x630 works best)</span></label><input id="img" type="text" placeholder="https://example.com/share.jpg" /></div>
+
+        <details class="adv">
+          <summary>Include in output</summary>
+          <div>
+            <label class="check"><input type="checkbox" id="iCanon" checked /> Canonical link</label>
+            <label class="check"><input type="checkbox" id="iOg" checked /> Open Graph (Facebook, WhatsApp, LinkedIn)</label>
+            <label class="check"><input type="checkbox" id="iTw" checked /> Twitter / X card</label>
+            <div class="field" style="margin-top:12px;margin-bottom:0;">
+              <label for="robots">Robots directive</label>
+              <select id="robots"><option value="">Default (omit tag)</option><option value="index, follow">index, follow</option><option value="noindex, follow">noindex, follow</option><option value="noindex, nofollow">noindex, nofollow</option></select>
+            </div>
+          </div>
+        </details>
       </div>
 
       <div class="mtg__preview-col">
-        <p class="mtg__label">Google search preview</p>
-        <div class="serp" id="mtg-serp">
-          <div class="serp__site">
-            <span class="serp__favicon" aria-hidden="true"></span>
-            <div>
-              <p class="serp__sitename" id="serp-sitename">yoursite.com</p>
-              <p class="serp__url" id="serp-url">https://example.com/page</p>
-            </div>
-          </div>
-          <p class="serp__title" id="serp-title">Your page title will appear here</p>
-          <p class="serp__desc" id="serp-desc">Your meta description will appear here once you start typing above.</p>
+        <div class="tabs" id="pvTabs">
+          <button type="button" class="active" data-t="gd">Google desktop</button>
+          <button type="button" data-t="gm">Google mobile</button>
+          <button type="button" data-t="so">Social share</button>
         </div>
+        <div id="pvPanes">
+          <div data-pane="gd"><div class="serp" id="serpD">
+            <div class="serp__site"><span class="serp__favicon" aria-hidden="true"></span><div><p class="serp__sitename" id="sName">yoursite.com</p><p class="serp__url" id="sUrl">https://example.com/page</p></div></div>
+            <p class="serp__title" id="sTitle">Your page title will appear here</p>
+            <p class="serp__desc" id="sDesc">Your meta description will appear here once you start typing.</p>
+          </div></div>
+          <div data-pane="gm" class="hidden"><div class="serp mobile" id="serpM">
+            <div class="serp__site"><span class="serp__favicon" aria-hidden="true"></span><div><p class="serp__sitename" id="mName">yoursite.com</p><p class="serp__url" id="mUrl">https://example.com/page</p></div></div>
+            <p class="serp__title" id="mTitle" style="white-space:normal;">Your page title will appear here</p>
+            <p class="serp__desc" id="mDesc">Your meta description will appear here once you start typing.</p>
+          </div></div>
+          <div data-pane="so" class="hidden"><div class="social">
+            <div class="img" id="soImg">No share image</div>
+            <div class="meta"><div class="d" id="soDom">yoursite.com</div><div class="t" id="soTitle">Your page title</div><div class="s" id="soDesc">Your description</div></div>
+          </div></div>
+        </div>
+        <div id="advice" class="hint" style="margin:12px 0;"></div>
 
-        <p class="mtg__label">Generated HTML</p>
-        <pre class="mtg__code" id="mtg-code"><code id="mtg-code-text">&lt;!-- Fill in the fields above --&gt;</code></pre>
-        <button type="button" class="primary-button" id="mtg-copy" style="width:100%; border:none; text-align:center;">Copy HTML</button>
+        <p class="mtg__label" style="margin-top:20px;">Generated HTML</p>
+        <pre class="mtg__code" id="code"><code id="codeText">&lt;!-- Fill in the fields to generate tags --&gt;</code></pre>
+        <div class="actions">
+          <button type="button" class="primary-button" id="copy" style="border:none;">Copy HTML</button>
+          <button type="button" class="secondary-button" id="dl">Download .html</button>
+        </div>
       </div>
     </div>
   </section>
@@ -153,75 +186,49 @@ const faqs = [
 
   <script slot="body-end" is:inline>
 (function () {
-  var titleEl = document.getElementById('mtg-title');
-  var descEl = document.getElementById('mtg-desc');
-  var urlEl = document.getElementById('mtg-url');
-  var siteEl = document.getElementById('mtg-site');
-  var titleCount = document.getElementById('mtg-title-count');
-  var descCount = document.getElementById('mtg-desc-count');
-  var serpSitename = document.getElementById('serp-sitename');
-  var serpUrl = document.getElementById('serp-url');
-  var serpTitle = document.getElementById('serp-title');
-  var serpDesc = document.getElementById('serp-desc');
-  var codeText = document.getElementById('mtg-code-text');
-  var copyBtn = document.getElementById('mtg-copy');
-  var resetBtn = document.getElementById('mtg-reset');
+  var $ = function (id) { return document.getElementById(id); };
+  var ctx = document.createElement('canvas').getContext('2d');
+  function px(text, font) { ctx.font = font; return Math.round(ctx.measureText(text).width); }
+  function host(u) { try { return new URL(/^[a-z]+:/i.test(u) ? u : 'https://' + u).hostname.replace(/^www\./, ''); } catch (e) { return u ? u.replace(/^https?:\/\//, '').split('/')[0] : 'yoursite.com'; } }
+  function meter(bar, w, limit) { var el = bar.firstElementChild; el.style.width = Math.min(100, w / limit * 100) + '%'; bar.classList.toggle('over', w > limit); }
 
-  function escapeHtml(str) {
-    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  }
-  function setCount(el, countEl, limit) {
-    var len = el.value.length;
-    countEl.textContent = len + ' / ' + limit;
-    countEl.classList.remove('is-warn', 'is-bad');
-    if (len > limit) countEl.classList.add('is-bad');
-    else if (len > limit * 0.85) countEl.classList.add('is-warn');
-  }
-  function hostnameFrom(url) {
-    try { return new URL(url).hostname.replace(/^www\./, ''); }
-    catch (e) { return url ? url.replace(/^https?:\/\//, '').split('/')[0] : 'yoursite.com'; }
-  }
   function render() {
-    var title = titleEl.value.trim();
-    var desc = descEl.value.trim();
-    var url = urlEl.value.trim();
-    var site = siteEl.value.trim();
+    var t = $('title').value.trim(), d = $('desc').value.trim(), u = $('url').value.trim(), s = $('site').value.trim(), tw = $('tw').value.trim().replace(/^@?/, '@'), im = $('img').value.trim();
+    var tw_ = px(t, '20px arial'), dw = px(d, '14px arial');
+    $('tCount').textContent = t.length + ' chars \u00b7 ' + tw_ + ' / 600 px'; $('dCount').textContent = d.length + ' chars \u00b7 ' + dw + ' / 920 px';
+    meter($('tBar'), tw_, 600); meter($('dBar'), dw, 920);
+    $('tCount').classList.toggle('is-bad', tw_ > 600); $('dCount').classList.toggle('is-bad', dw > 920);
+    var T = t || 'Your page title will appear here', D = d || 'Your meta description will appear here once you start typing.', H = host(u), U = u || 'https://example.com/page';
+    $('sTitle').textContent = T; $('mTitle').textContent = T; $('sDesc').textContent = D; $('mDesc').textContent = D;
+    $('sName').textContent = H; $('mName').textContent = H; $('sUrl').textContent = U; $('mUrl').textContent = U;
+    $('soTitle').textContent = t || 'Your page title'; $('soDesc').textContent = d || 'Your description'; $('soDom').textContent = H;
+    var soImg = $('soImg'); if (im) { var i = new Image(); i.onload = function () { soImg.style.backgroundImage = 'url("' + im.replace(/"/g, '%22') + '")'; soImg.textContent = ''; }; i.onerror = function () { soImg.style.backgroundImage = ''; soImg.textContent = 'Image could not be loaded'; }; i.src = im; } else { soImg.style.backgroundImage = ''; soImg.textContent = 'No share image'; }
 
-    setCount(titleEl, titleCount, 60);
-    setCount(descEl, descCount, 160);
+    var tips = []; if (t && tw_ > 600) tips.push('Your title is wider than Google usually shows (about 600 px) and will be cut off.'); if (t && t.length < 25) tips.push('A longer title (30-60 characters) usually performs better.');
+    if (d && dw > 920) tips.push('Your description is likely to be truncated in results.'); if (d && d.length < 70) tips.push('Descriptions around 120-160 characters tend to work best.');
+    if (u && !/^https?:\/\//i.test(u)) tips.push('Use a full URL starting with https:// for canonical and Open Graph tags.');
+    $('advice').innerHTML = tips.length ? tips.map(function (x) { return '&bull; ' + VT.esc(x); }).join('<br>') : (t || d ? 'Looking good.' : '');
 
-    serpTitle.textContent = title || 'Your page title will appear here';
-    serpDesc.textContent = desc || 'Your meta description will appear here once you start typing above.';
-    serpUrl.textContent = url || 'https://example.com/page';
-    serpSitename.textContent = hostnameFrom(url);
-
-    var lines = [];
-    if (title) lines.push('<title>' + escapeHtml(title) + '</title>');
-    if (desc) lines.push('<meta name="description" content="' + escapeHtml(desc) + '">');
-    if (url) lines.push('<link rel="canonical" href="' + escapeHtml(url) + '">');
-    lines.push('', '<!-- Open Graph -->', '<meta property="og:type" content="website">');
-    if (title) lines.push('<meta property="og:title" content="' + escapeHtml(title) + '">');
-    if (desc) lines.push('<meta property="og:description" content="' + escapeHtml(desc) + '">');
-    if (url) lines.push('<meta property="og:url" content="' + escapeHtml(url) + '">');
-    if (site) lines.push('<meta property="og:site_name" content="' + escapeHtml(site) + '">');
-    lines.push('', '<!-- Twitter Card -->', '<meta name="twitter:card" content="summary_large_image">');
-    if (title) lines.push('<meta name="twitter:title" content="' + escapeHtml(title) + '">');
-    if (desc) lines.push('<meta name="twitter:description" content="' + escapeHtml(desc) + '">');
-
-    codeText.textContent = lines.length > 6 ? lines.join('\n') : '<!-- Fill in the fields above -->';
+    var e = VT.esc, L = [];
+    if (t) L.push('<title>' + e(t) + '</title>'); if (d) L.push('<meta name="description" content="' + e(d) + '">');
+    if ($('robots').value) L.push('<meta name="robots" content="' + e($('robots').value) + '">');
+    if ($('iCanon').checked && u) L.push('<link rel="canonical" href="' + e(u) + '">');
+    if ($('iOg').checked) { L.push('', '<!-- Open Graph -->', '<meta property="og:type" content="website">'); if (t) L.push('<meta property="og:title" content="' + e(t) + '">'); if (d) L.push('<meta property="og:description" content="' + e(d) + '">'); if (u) L.push('<meta property="og:url" content="' + e(u) + '">'); if (s) L.push('<meta property="og:site_name" content="' + e(s) + '">'); if (im) L.push('<meta property="og:image" content="' + e(im) + '">'); }
+    if ($('iTw').checked) { L.push('', '<!-- Twitter / X -->', '<meta name="twitter:card" content="' + (im ? 'summary_large_image' : 'summary') + '">'); if (t) L.push('<meta name="twitter:title" content="' + e(t) + '">'); if (d) L.push('<meta name="twitter:description" content="' + e(d) + '">'); if (im) L.push('<meta name="twitter:image" content="' + e(im) + '">'); if (tw.length > 1) L.push('<meta name="twitter:site" content="' + e(tw) + '">'); }
+    var out = L.filter(function (x, i, a) { return x !== '' || (i > 0 && a[i - 1] !== ''); }).join('\n').trim();
+    $('codeText').textContent = (t || d) ? out : '<!-- Fill in the fields to generate tags -->';
+    window.__mtgOut = (t || d) ? out : '';
   }
-  [titleEl, descEl, urlEl, siteEl].forEach(function (el) { el.addEventListener('input', render); });
-  resetBtn.addEventListener('click', function () {
-    titleEl.value = descEl.value = urlEl.value = siteEl.value = '';
-    render();
+  ['title', 'desc', 'url', 'site', 'tw', 'img'].forEach(function (id) { $(id).addEventListener('input', render); });
+  ['iCanon', 'iOg', 'iTw', 'robots'].forEach(function (id) { $(id).addEventListener('change', render); });
+  VT.tabs($('pvTabs'), $('pvPanes'));
+  $('example').addEventListener('click', function () {
+    $('title').value = 'Affordable Web Design in Lahore | Veloce Digital'; $('desc').value = 'Custom websites, SEO and digital marketing for businesses across Pakistan. Built fast, priced fairly, and designed to bring in customers.';
+    $('url').value = 'https://velocedigital.co/'; $('site').value = 'Veloce Digital'; $('tw').value = '@velocedigital'; render();
   });
-  copyBtn.addEventListener('click', function () {
-    navigator.clipboard.writeText(codeText.textContent).then(function () {
-      var original = copyBtn.textContent;
-      copyBtn.textContent = 'Copied!';
-      setTimeout(function () { copyBtn.textContent = original; }, 1600);
-    });
-  });
+  $('reset').addEventListener('click', function () { ['title', 'desc', 'url', 'site', 'tw', 'img'].forEach(function (id) { $(id).value = ''; }); $('robots').value = ''; render(); });
+  $('copy').addEventListener('click', function () { if (window.__mtgOut) VT.copy(window.__mtgOut, 'Meta tags copied'); else VT.toast('Fill in a title or description first'); });
+  $('dl').addEventListener('click', function () { if (window.__mtgOut) VT.download('<!-- Paste inside <head> -->\n' + window.__mtgOut + '\n', 'meta-tags.html', 'text/html'); else VT.toast('Nothing to download yet'); });
   render();
 })();
   </script>

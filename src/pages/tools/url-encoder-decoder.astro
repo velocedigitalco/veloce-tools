@@ -9,33 +9,87 @@ const faqs = [
 ---
 <BaseLayout
   title="Free URL Encoder & Decoder Online | Veloce Tools"
-  description="Encode or decode URLs and query strings instantly in your browser. Free, no signup."
+  description="Encode and decode URLs, parse a link into its parts and query parameters, or build a query string. Free, runs in your browser."
   jsonLd={[
     { '@context': 'https://schema.org', '@type': 'SoftwareApplication', name: 'URL Encoder/Decoder', applicationCategory: 'BrowserApplication', operatingSystem: 'Any', offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' } },
     { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
   ]}
 >
   <section class="section--tight">
-    <div class="tool-hero">
+<div class="tool-hero">
       <span class="eyebrow">Free tool</span>
-      <h1>URL Encoder & Decoder</h1>
-      <p>Encode special characters for use in a URL, or decode an encoded URL back to readable text.</p>
+      <h1>URL Encoder, Decoder &amp; Parser</h1>
+      <p>Encode or decode URLs three ways, break any link into its parts and query parameters, or build a clean query string from a list of values.</p>
     </div>
 
-    <div class="segmented" style="max-width:300px;">
-      <label><input type="radio" name="mode" value="encode" checked><span>Encode</span></label>
-      <label><input type="radio" name="mode" value="decode"><span>Decode</span></label>
+    <div class="tabs" id="mainTabs">
+      <button type="button" class="active" data-t="enc">Encode / Decode</button>
+      <button type="button" data-t="parse">Parse a URL</button>
+      <button type="button" data-t="build">Build a query string</button>
     </div>
 
-    <div class="tool-columns" style="margin-top:10px;">
-      <div class="field" style="margin-bottom:0;">
-        <label for="input">Input</label>
-        <textarea id="input" placeholder="Paste a URL, query string, or text..." style="min-height:200px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:13px;"></textarea>
+    <div id="mainPanes">
+      <div data-pane="enc">
+        <div class="opt-grid" style="max-width:640px;">
+          <div class="field">
+            <label>Direction</label>
+            <div class="segmented" style="margin:0;">
+              <label><input type="radio" name="mode" value="encode" checked><span>Encode</span></label>
+              <label><input type="radio" name="mode" value="decode"><span>Decode</span></label>
+            </div>
+          </div>
+          <div class="field">
+            <label for="method">Method</label>
+            <select id="method">
+              <option value="component">Component (strict, best for values)</option>
+              <option value="uri">Full URL (keeps : / ? &amp; =)</option>
+              <option value="form">Form style (space becomes +)</option>
+            </select>
+          </div>
+        </div>
+        <label class="check"><input type="checkbox" id="perLine" /> Process each line separately</label>
+        <div class="tool-columns" style="margin-top:12px;">
+          <div class="field" style="margin-bottom:0;">
+            <label for="in" id="inLbl">Text to encode</label>
+            <textarea id="in" spellcheck="false" placeholder="Paste a URL, query value or text..." style="min-height:220px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;"></textarea>
+          </div>
+          <div>
+            <p class="tool-label" id="outLbl">Encoded result</p>
+            <div class="out mono" id="out" style="min-height:220px;"></div>
+            <div class="actions">
+              <button type="button" class="mini dark" data-copy="#out">Copy result</button>
+              <button type="button" class="mini" id="swap">Swap input and output</button>
+              <button type="button" class="mini" id="clr">Clear</button>
+            </div>
+          </div>
+        </div>
       </div>
-      <div>
-        <p class="tool-label">Result</p>
-        <pre class="result-box" id="output" style="min-height:200px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:13px; overflow:auto; margin-top:0;"></pre>
-        <button type="button" class="copy-btn" id="copyBtn" style="margin-top:10px;">Copy result</button>
+
+      <div data-pane="parse" class="hidden">
+        <div class="field"><label for="pin">URL to parse</label>
+          <input id="pin" type="text" placeholder="https://user@example.com:8080/path/page?utm_source=news&amp;id=42#section" /></div>
+        <div class="actions" style="margin-top:0;"><button type="button" class="mini" id="pSample">Load example</button></div>
+        <div class="tool-columns" style="margin-top:12px;">
+          <div><p class="tool-label">Parts</p><div class="panel" id="parts" style="padding:8px 18px;"><p class="hint">Enter a URL above.</p></div></div>
+          <div><p class="tool-label">Query parameters</p><div class="panel" id="params" style="padding:8px 18px;"><p class="hint">No parameters yet.</p></div></div>
+        </div>
+      </div>
+
+      <div data-pane="build" class="hidden">
+        <div class="tool-columns" style="margin-top:0;">
+          <div>
+            <div class="field"><label for="base">Base URL (optional)</label><input id="base" type="text" placeholder="https://example.com/search" /></div>
+            <div class="field"><label for="kv">Parameters, one per line (key=value)</label>
+              <textarea id="kv" spellcheck="false" placeholder="q=web design&#10;city=Lahore&#10;utm_source=newsletter" style="min-height:160px;font-family:ui-monospace,Menlo,monospace;font-size:13px;"></textarea></div>
+            <div class="field"><label for="spc">Encode spaces as</label>
+              <select id="spc"><option value="%20">%20 (standard)</option><option value="+">+ (form style)</option></select></div>
+          </div>
+          <div>
+            <p class="tool-label">Result</p>
+            <div class="out mono" id="bOut" style="min-height:120px;"></div>
+            <div class="actions"><button type="button" class="mini dark" data-copy="#bOut">Copy URL</button></div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -67,29 +121,63 @@ const faqs = [
 
   <script slot="body-end" is:inline>
 (function () {
-  var input = document.getElementById('input');
-  var output = document.getElementById('output');
-  var copyBtn = document.getElementById('copyBtn');
+  var $ = function (id) { return document.getElementById(id); };
+  var mode = function () { return document.querySelector('input[name="mode"]:checked').value; };
 
-  function process() {
-    var text = input.value;
-    var mode = document.querySelector('input[name="mode"]:checked').value;
-    if (mode === 'encode') {
-      output.textContent = encodeURIComponent(text);
-    } else {
-      try { output.textContent = decodeURIComponent(text); }
-      catch { output.textContent = 'Invalid encoded input.'; }
-    }
+  function enc(s, m) { var v = m === 'uri' ? encodeURI(s) : encodeURIComponent(s); return m === 'form' ? v.replace(/%20/g, '+') : v; }
+  function dec(s, m) { if (m === 'form') s = s.replace(/\+/g, ' '); return m === 'uri' ? decodeURI(s) : decodeURIComponent(s); }
+
+  function run() {
+    var s = $('in').value, m = mode(), meth = $('method').value, o = $('out');
+    $('inLbl').textContent = m === 'encode' ? 'Text to encode' : 'Text to decode';
+    $('outLbl').textContent = m === 'encode' ? 'Encoded result' : 'Decoded result';
+    o.className = 'out mono';
+    if (!s) { o.textContent = ''; return; }
+    try {
+      var f = function (x) { return m === 'encode' ? enc(x, meth) : dec(x, meth); };
+      o.textContent = $('perLine').checked ? s.split('\n').map(f).join('\n') : f(s);
+    } catch (e) { o.className = 'out err'; o.textContent = 'Could not decode. The input contains an invalid percent sequence (for example a stray % sign).'; }
   }
-
-  input.addEventListener('input', process);
-  document.querySelectorAll('input[name="mode"]').forEach(function (el) { el.addEventListener('change', process); });
-  copyBtn.addEventListener('click', function () {
-    navigator.clipboard.writeText(output.textContent).then(function () {
-      copyBtn.classList.add('is-copied'); copyBtn.textContent = 'Copied!';
-      setTimeout(function () { copyBtn.classList.remove('is-copied'); copyBtn.textContent = 'Copy result'; }, 1500);
-    });
+  ['in'].forEach(function (id) { $(id).addEventListener('input', run); });
+  ['method', 'perLine'].forEach(function (id) { $(id).addEventListener('change', run); });
+  document.querySelectorAll('input[name="mode"]').forEach(function (r) { r.addEventListener('change', run); });
+  $('clr').addEventListener('click', function () { $('in').value = ''; run(); });
+  $('swap').addEventListener('click', function () {
+    var res = $('out').classList.contains('err') ? '' : $('out').textContent; $('in').value = res;
+    document.querySelector('input[name="mode"][value="' + (mode() === 'encode' ? 'decode' : 'encode') + '"]').checked = true; run();
   });
+  VT.tabs($('mainTabs'), $('mainPanes'));
+
+  /* parser */
+  function row(label, val) {
+    return '<div class="rowline"><div class="lbl">' + label + '</div><div class="val">' + (val ? VT.esc(val) : '<span style="color:#bbb">none</span>') + '</div>' +
+      (val ? '<button type="button" class="mini" data-v="' + VT.esc(val) + '">Copy</button>' : '') + '</div>';
+  }
+  function parse() {
+    var s = $('pin').value.trim();
+    if (!s) { $('parts').innerHTML = '<p class="hint">Enter a URL above.</p>'; $('params').innerHTML = '<p class="hint">No parameters yet.</p>'; return; }
+    var u; try { u = new URL(/^[a-z][a-z0-9+.-]*:/i.test(s) ? s : 'https://' + s); }
+    catch (e) { $('parts').innerHTML = '<div class="out err" style="margin:10px 0;">That does not look like a valid URL.</div>'; $('params').innerHTML = ''; return; }
+    var dp; try { dp = decodeURIComponent(u.pathname); } catch (e) { dp = u.pathname; }
+    $('parts').innerHTML = row('Protocol', u.protocol.replace(':', '')) + row('Host', u.hostname) + row('Port', u.port) + row('Path', u.pathname) +
+      (dp !== u.pathname ? row('Decoded path', dp) : '') + row('Query', u.search) + row('Fragment', u.hash) + row('Username', u.username) + row('Origin', u.origin);
+    var ps = Array.from(u.searchParams.entries());
+    $('params').innerHTML = ps.length ? ps.map(function (p) { return row(p[0], p[1]); }).join('') : '<p class="hint">This URL has no query parameters.</p>';
+  }
+  $('pin').addEventListener('input', VT.debounce(parse, 150));
+  $('pSample').addEventListener('click', function () { $('pin').value = 'https://user@example.com:8080/caf%C3%A9/menu?utm_source=news%20letter&id=42&ref=a%26b#section-2'; parse(); });
+  document.addEventListener('click', function (e) { var b = e.target.closest('[data-v]'); if (b) VT.copy(b.getAttribute('data-v')); });
+
+  /* builder */
+  function build() {
+    var lines = $('kv').value.split('\n').map(function (l) { return l.trim(); }).filter(Boolean), sp = $('spc').value;
+    var q = lines.map(function (l) {
+      var i = l.indexOf('='); var k = i < 0 ? l : l.slice(0, i), v = i < 0 ? '' : l.slice(i + 1);
+      return encodeURIComponent(k.trim()).replace(/%20/g, sp) + '=' + encodeURIComponent(v.trim()).replace(/%20/g, sp);
+    }).join('&');
+    var base = $('base').value.trim(); $('bOut').textContent = (base ? base + (q ? (base.indexOf('?') > -1 ? '&' : '?') : '') : (q ? '?' : '')) + q;
+  }
+  ['kv', 'base'].forEach(function (id) { $(id).addEventListener('input', build); }); $('spc').addEventListener('change', build);
 })();
   </script>
 </BaseLayout>

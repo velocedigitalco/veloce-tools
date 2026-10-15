@@ -8,37 +8,72 @@ const faqs = [
 ];
 ---
 <BaseLayout
-  title="Free SHA-256 / SHA-1 Hash Generator | Veloce Tools"
-  description="Generate SHA-1, SHA-256, SHA-384, or SHA-512 hashes instantly using your browser's Web Crypto API. Free, no signup, nothing sent to a server."
+  title="Free Hash Generator (MD5, SHA-256, SHA-512) | Veloce Tools"
+  description="Generate MD5, SHA-1, SHA-256, SHA-384 and SHA-512 hashes for text or files, with HMAC and a hash verifier. Runs in your browser; nothing is uploaded."
   jsonLd={[
     { '@context': 'https://schema.org', '@type': 'SoftwareApplication', name: 'Hash Generator', applicationCategory: 'BrowserApplication', operatingSystem: 'Any', offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' } },
     { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
   ]}
 >
   <section class="section--tight">
-    <div class="tool-hero">
+<div class="tool-hero">
       <span class="eyebrow">Free tool</span>
       <h1>Hash Generator</h1>
-      <p>Generate a cryptographic hash of any text, computed locally using your browser's Web Crypto API.</p>
+      <p>MD5, SHA-1, SHA-256, SHA-384 and SHA-512 at once, for text or files. Add an HMAC key, switch between hex and Base64, and verify a hash by pasting the expected value.</p>
     </div>
 
-    <div class="field">
-      <label for="hashInput">Text to hash</label>
-      <textarea id="hashInput" placeholder="Enter text..." style="min-height:140px;"></textarea>
-    </div>
+    <div class="tool-columns">
+      <div>
+        <div class="tabs" id="srcTabs">
+          <button type="button" class="active" data-t="text">Text</button>
+          <button type="button" data-t="file">File</button>
+        </div>
+        <div id="srcPanes">
+          <div data-pane="text">
+            <div class="field"><label for="txt">Text to hash</label>
+              <textarea id="txt" spellcheck="false" placeholder="Type or paste text. Results update as you type." style="min-height:180px;"></textarea></div>
+          </div>
+          <div data-pane="file" class="hidden">
+            <label class="dropzone" id="dz">
+              <input type="file" />
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 16V4m0 0 5 5m-5-5-5 5M5 20h14" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span class="dz-title">Drop a file here, or click to browse</span>
+              <span class="dz-sub">Hashed on your device, never uploaded. Up to 300 MB.</span>
+            </label>
+            <p class="hint" id="fileInfo"></p>
+          </div>
+        </div>
 
-    <p class="tool-label">Algorithm</p>
-    <div class="segmented" style="max-width:500px;">
-      <label><input type="radio" name="alg" value="SHA-1"><span>SHA-1</span></label>
-      <label><input type="radio" name="alg" value="SHA-256" checked><span>SHA-256</span></label>
-      <label><input type="radio" name="alg" value="SHA-384"><span>SHA-384</span></label>
-      <label><input type="radio" name="alg" value="SHA-512"><span>SHA-512</span></label>
-    </div>
+        <div class="opt-grid">
+          <div class="field">
+            <label>Output</label>
+            <div class="segmented" style="margin:0;">
+              <label><input type="radio" name="enc" value="hex" checked><span>Hex</span></label>
+              <label><input type="radio" name="enc" value="b64"><span>Base64</span></label>
+            </div>
+          </div>
+          <div class="field">
+            <label>Case (hex only)</label>
+            <div class="segmented" style="margin:0;">
+              <label><input type="radio" name="case" value="lower" checked><span>lower</span></label>
+              <label><input type="radio" name="case" value="upper"><span>UPPER</span></label>
+            </div>
+          </div>
+        </div>
+        <label class="check"><input type="checkbox" id="useHmac" /> Use HMAC with a secret key</label>
+        <div class="field hidden" id="keyWrap" style="margin-top:8px;"><label for="key">Secret key</label><input id="key" type="text" placeholder="Your secret key" /></div>
+      </div>
 
-    <p class="tool-label" style="margin-top:20px;">Result</p>
-    <div class="result-row">
-      <div class="result-box" id="hashResult" style="font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:13px; word-break:break-all;"></div>
-      <button type="button" class="copy-btn" id="copyBtn">Copy</button>
+      <div>
+        <p class="tool-label">Hashes</p>
+        <div class="panel" id="rows" style="padding:8px 18px;"></div>
+        <div class="field" style="margin-top:16px;">
+          <label for="cmp">Verify against an expected hash</label>
+          <input id="cmp" type="text" class="mono" placeholder="Paste the hash you expect" />
+        </div>
+        <div class="out" id="cmpOut" style="color:#999;">A matching row will be highlighted.</div>
+        <p class="hint">MD5 and SHA-1 are fine for checksums but are no longer safe for security. Prefer SHA-256 or better.</p>
+      </div>
     </div>
   </section>
 
@@ -69,29 +104,90 @@ const faqs = [
 
   <script slot="body-end" is:inline>
 (function () {
-  var input = document.getElementById('hashInput');
-  var result = document.getElementById('hashResult');
-  var copyBtn = document.getElementById('copyBtn');
+  var $ = function (id) { return document.getElementById(id); };
+  var ALGS = [['MD5', 64], ['SHA-1', 64], ['SHA-256', 64], ['SHA-384', 128], ['SHA-512', 128]];
+  var fileBytes = new Uint8Array(0), source = 'text', token = 0, last = {};
 
-  function alg() { return document.querySelector('input[name="alg"]:checked').value; }
-
-  async function compute() {
-    var text = input.value;
-    if (!text) { result.textContent = ''; return; }
-    var data = new TextEncoder().encode(text);
-    var hashBuffer = await crypto.subtle.digest(alg(), data);
-    var hex = Array.from(new Uint8Array(hashBuffer)).map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
-    result.textContent = hex;
+  function md5(b) {
+    function add(x, y) { return (x + y) | 0; }
+    function rol(x, c) { return (x << c) | (x >>> (32 - c)); }
+    var K = [], S = [7, 12, 17, 22, 5, 9, 14, 20, 4, 11, 16, 23, 6, 10, 15, 21], i;
+    for (i = 0; i < 64; i++) K[i] = Math.floor(Math.abs(Math.sin(i + 1)) * 4294967296) | 0;
+    var len = b.length, nb = ((len + 8) >>> 6) + 1, w = new Int32Array(nb * 16);
+    for (i = 0; i < len; i++) w[i >> 2] |= b[i] << ((i % 4) * 8);
+    w[len >> 2] |= 0x80 << ((len % 4) * 8); w[nb * 16 - 2] = len << 3; w[nb * 16 - 1] = len >>> 29;
+    var a = 1732584193, bb = -271733879, c = -1732584194, d = 271733878;
+    for (var j = 0; j < nb * 16; j += 16) {
+      var A = a, B = bb, C = c, D = d;
+      for (i = 0; i < 64; i++) {
+        var f, g;
+        if (i < 16) { f = (B & C) | (~B & D); g = i; } else if (i < 32) { f = (D & B) | (~D & C); g = (5 * i + 1) % 16; }
+        else if (i < 48) { f = B ^ C ^ D; g = (3 * i + 5) % 16; } else { f = C ^ (B | ~D); g = (7 * i) % 16; }
+        var t = D; D = C; C = B; B = add(B, rol(add(add(A, f), add(K[i], w[j + g])), S[(i >> 4) * 4 + (i % 4)])); A = t;
+      }
+      a = add(a, A); bb = add(bb, B); c = add(c, C); d = add(d, D);
+    }
+    var out = new Uint8Array(16);
+    [a, bb, c, d].forEach(function (v, n) { for (var k = 0; k < 4; k++) out[n * 4 + k] = (v >>> (k * 8)) & 255; });
+    return out;
+  }
+  function hashFn(name) { return name === 'MD5' ? function (b) { return Promise.resolve(md5(b)); } : function (b) { return crypto.subtle.digest(name, b).then(function (r) { return new Uint8Array(r); }); }; }
+  function cat(a, b) { var r = new Uint8Array(a.length + b.length); r.set(a); r.set(b, a.length); return r; }
+  function hmac(h, bs, key, msg) {
+    return (key.length > bs ? h(key) : Promise.resolve(key)).then(function (k0) {
+      var k = new Uint8Array(bs); k.set(k0);
+      var ip = k.map(function (x) { return x ^ 0x36; }), op = k.map(function (x) { return x ^ 0x5c; });
+      return h(cat(ip, msg)).then(function (inner) { return h(cat(op, inner)); });
+    });
+  }
+  function encode(u8) {
+    if (document.querySelector('input[name="enc"]:checked').value === 'b64') { var s = ''; u8.forEach(function (x) { s += String.fromCharCode(x); }); return btoa(s); }
+    var h = Array.from(u8, function (x) { return x.toString(16).padStart(2, '0'); }).join('');
+    return document.querySelector('input[name="case"]:checked').value === 'upper' ? h.toUpperCase() : h;
   }
 
-  input.addEventListener('input', compute);
-  document.querySelectorAll('input[name="alg"]').forEach(function (el) { el.addEventListener('change', compute); });
-  copyBtn.addEventListener('click', function () {
-    navigator.clipboard.writeText(result.textContent).then(function () {
-      copyBtn.classList.add('is-copied'); copyBtn.textContent = 'Copied!';
-      setTimeout(function () { copyBtn.classList.remove('is-copied'); copyBtn.textContent = 'Copy'; }, 1500);
-    });
+  function compute() {
+    var my = ++token, useH = $('useHmac').checked, key = new TextEncoder().encode($('key').value);
+    var data = source === 'text' ? new TextEncoder().encode($('txt').value) : fileBytes;
+    if (!data.length) { render({}, true); return; }
+    Promise.all(ALGS.map(function (a) {
+      var h = hashFn(a[0]);
+      return (useH && key.length ? hmac(h, a[1], key, data) : h(data)).then(function (r) { return [a[0], encode(r)]; });
+    })).then(function (res) { if (my !== token) return; var o = {}; res.forEach(function (r) { o[r[0]] = r[1]; }); render(o, false); });
+  }
+  function render(o, empty) {
+    last = o;
+    $('rows').innerHTML = ALGS.map(function (a) {
+      var v = o[a[0]] || '';
+      return '<div class="rowline" data-alg="' + a[0] + '"><div class="lbl">' + a[0] + '</div><div class="val">' + (v ? VT.esc(v) : '<span style="color:#bbb">' + (empty ? 'waiting for input' : '') + '</span>') + '</div>' +
+        (v ? '<button type="button" class="mini" data-v="' + VT.esc(v) + '">Copy</button>' : '') + '</div>';
+    }).join('');
+    compare();
+  }
+  function compare() {
+    var want = $('cmp').value.trim().replace(/\s+/g, ''), out = $('cmpOut');
+    document.querySelectorAll('#rows .rowline').forEach(function (r) { r.classList.remove('match'); });
+    if (!want) { out.className = 'out'; out.style.color = '#999'; out.textContent = 'A matching row will be highlighted.'; return; }
+    out.style.color = '';
+    var hit = null; ALGS.forEach(function (a) { var v = last[a[0]]; if (v && v.toLowerCase() === want.toLowerCase()) hit = a[0]; });
+    if (hit) { out.className = 'out ok'; out.textContent = 'Match. The expected hash equals the ' + hit + ' result.'; document.querySelector('#rows [data-alg="' + hit + '"]').classList.add('match'); }
+    else { out.className = 'out err'; out.textContent = 'No match. The hash differs from every result above, so the content has changed or the settings (HMAC, encoding) differ.'; }
+  }
+
+  $('txt').addEventListener('input', VT.debounce(compute, 120));
+  document.querySelectorAll('input[name="enc"], input[name="case"]').forEach(function (r) { r.addEventListener('change', compute); });
+  $('useHmac').addEventListener('change', function () { $('keyWrap').classList.toggle('hidden', !this.checked); compute(); });
+  $('key').addEventListener('input', VT.debounce(compute, 150));
+  $('cmp').addEventListener('input', compare);
+  VT.tabs($('srcTabs'), $('srcPanes'), function (t) { source = t; compute(); });
+  VT.drop($('dz'), function (files) {
+    var f = files[0]; if (!f) return;
+    if (f.size > 300 * 1048576) { VT.toast('File is larger than 300 MB'); return; }
+    $('fileInfo').textContent = 'Reading ' + f.name + ' (' + VT.bytes(f.size) + ')...';
+    f.arrayBuffer().then(function (b) { fileBytes = new Uint8Array(b); $('fileInfo').textContent = f.name + ' \u00b7 ' + VT.bytes(f.size); compute(); });
   });
+  document.addEventListener('click', function (e) { var b = e.target.closest('#rows [data-v]'); if (b) VT.copy(b.getAttribute('data-v'), 'Hash copied'); });
+  compute();
 })();
   </script>
 </BaseLayout>
