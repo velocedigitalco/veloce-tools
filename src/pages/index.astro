@@ -1,21 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-
-const tools = [
-  { href: '/tools/seo-meta-tag-generator', icon: '◎', title: 'SEO Meta Tag Generator', desc: 'Pixel-width meters, Google desktop, mobile and social previews, and copy-ready tags.' },
-  { href: '/tools/qr-code-generator', icon: '⌁', title: 'QR Code Generator', desc: 'Links, WhatsApp, Wi-Fi and contacts. Style it, then export PNG or SVG.' },
-  { href: '/tools/image-compressor', icon: '◌', title: 'Image Compressor', desc: 'Batch compress with presets, resize and a before/after slider. Download as ZIP.' },
-  { href: '/tools/image-converter', icon: '◫', title: 'Image Converter', desc: 'Batch convert PNG, JPEG, WebP and AVIF. Resize, rotate and flip as you go.' },
-  { href: '/tools/json-formatter', icon: '{ }', title: 'JSON Formatter', desc: 'Live validation, tree view, sort keys, minify and auto-fix common mistakes.' },
-  { href: '/tools/password-generator', icon: '✦', title: 'Password Generator', desc: 'Random passwords, passphrases and PINs with real entropy-based strength.' },
-  { href: '/tools/text-counter', icon: 'Aa', title: 'Text Counter', desc: 'Live counts, platform limits, keyword density and quick text clean-up.' },
-  { href: '/tools/uuid-generator', icon: '#', title: 'UUID Generator', desc: 'v4, time-ordered v7 or nil. Bulk generate, any format, plus a validator.' },
-  { href: '/tools/base64-encoder-decoder', icon: '↔', title: 'Base64 Tool', desc: 'Text, files and images. URL-safe mode, data URIs and previews.' },
-  { href: '/tools/url-encoder-decoder', icon: '↗', title: 'URL Encoder', desc: 'Encode, decode, parse any link into parts, or build a query string.' },
-  { href: '/tools/timestamp-converter', icon: '◷', title: 'Timestamp Converter', desc: 'Any timezone, auto-detects seconds to nanoseconds, converts whole lists.' },
-  { href: '/tools/hash-generator', icon: '#', title: 'Hash Generator', desc: 'MD5 and SHA family at once, HMAC, file hashing and a hash verifier.' },
-  { href: '/tools/color-converter', icon: '◉', title: 'Color Converter', desc: 'HEX, RGB, HSL, CMYK, contrast checks, palettes and a screen eyedropper.' },
-];
+import { tools } from '../data/tools';
+const site = 'https://tools.velocedigital.co';
 ---
 <BaseLayout
   title="Veloce Tools — Useful tools. Beautifully simple."
@@ -25,65 +11,34 @@ const tools = [
     '@type': 'CollectionPage',
     name: 'Veloce Tools',
     description: 'Free, privacy-friendly digital tools for everyday work.',
+    mainEntity: {
+      '@type': 'ItemList',
+      itemListElement: tools.map((t, i) => ({ '@type': 'ListItem', position: i + 1, name: t.title, url: site + t.href })),
+    },
   }}
 >
-  <script slot="head" src="/js/qrcode.js"></script>
-
   <!-- ===================== HERO ===================== -->
-  <header class="hero">
+  <header class="hero hero--compact">
     <div class="eyebrow">A product by Veloce Digital</div>
     <h1>Useful tools.<br /><span>Beautifully simple.</span></h1>
-    <p class="hero-description">A growing collection of fast, focused digital tools designed to help you get things done — without the clutter.</p>
-    <div class="hero-actions">
-      <a href="#tools" class="primary-button">Explore Veloce Tools</a>
-      <a href="#why" class="secondary-button">Why we built this</a>
-    </div>
+    <p class="hero-description">Fast, focused tools for everyday work. Pick one below. Free, private, no signup.</p>
     <div class="trust">
       <span>Free to use</span>
-      <span>Privacy-minded</span>
+      <span>Runs in your browser</span>
       <span>No unnecessary signup</span>
       <span>Built by Veloce Digital</span>
     </div>
   </header>
 
-  <!-- ===================== FEATURED QR TOOL ===================== -->
-  <section class="featured-section">
-    <div class="featured">
-      <div class="featured-copy">
-        <small>Featured tool</small>
-        <h2>Turn a link into a QR code.</h2>
-        <p>Need to share something physical with a digital audience? Create a clean, high-quality QR code in seconds.</p>
-        <div class="featured-tags">
-          <span class="tag">Instant</span>
-          <span class="tag">No account</span>
-          <span class="tag">PNG download</span>
-          <span class="tag">Free</span>
-        </div>
-        <a href="/tools/qr-code-generator" class="tool-open" style="margin-top:20px;">More options (size, color, error correction) <span>→</span></a>
-      </div>
-      <div class="qr-box">
-        <div class="qr-input-row">
-          <input id="qrInput" type="text" placeholder="Paste a URL or enter text..." />
-          <button onclick="generateQR()">Create</button>
-        </div>
-        <div class="qr-result" id="qrResult">
-          <canvas id="qrcode" width="460" height="460"></canvas>
-          <button class="qr-download" onclick="downloadQR()">Download PNG</button>
-        </div>
-      </div>
+  <!-- ===================== ALL TOOLS ===================== -->
+  <section class="section--grid" id="tools">
+    <div class="grid-head">
+      <span>{tools.length} free tools</span>
+      <span>Listed alphabetically</span>
     </div>
-  </section>
-
-  <!-- ===================== TOOLS ===================== -->
-  <section class="section" id="tools">
-    <div class="section-heading">
-      <h2>One place.<br />Many useful things.</h2>
-      <p>From working with images and text to handling developer utilities and SEO, Veloce Tools keeps the small jobs small. Every tool has its own page, so you can bookmark, share, or link straight to the one you need.</p>
-    </div>
-
     <div class="tools-grid">
       {tools.map((tool, i) => (
-        <a href={tool.href} style="text-decoration:none; color:inherit;">
+        <a href={tool.href} class="tool-link">
           <div class="tool">
             <div class="tool-number">{String(i + 1).padStart(2, '0')}</div>
             <div class="tool-content">
@@ -95,6 +50,16 @@ const tools = [
           </div>
         </a>
       ))}
+      <a href="https://velocedigital.co/contact.html?utm_source=veloce_tools&utm_medium=suggest_tool" target="_blank" rel="noopener" class="tool-link tool-link--filler">
+        <div class="tool tool--filler">
+          <div class="tool-number">+</div>
+          <div class="tool-content">
+            <h3>Missing a tool?</h3>
+            <p>Tell us what you would like to see next. We build the most requested ones first.</p>
+            <span class="tool-open">Suggest a tool <span>→</span></span>
+          </div>
+        </div>
+      </a>
     </div>
   </section>
 
@@ -130,24 +95,4 @@ const tools = [
     <p>Veloce Tools — useful digital tools by Veloce Digital.</p>
     <a href="#tools" class="cta-button">Explore all tools</a>
   </section>
-
-  <script slot="body-end" is:inline>
-function generateQR() {
-  const value = document.getElementById("qrInput").value.trim();
-  if (!value) return;
-  try {
-    const q = VT.qrMatrix(value, "Q");
-    VT.qrDraw(document.getElementById("qrcode"), q, 400, 30, "#111111", "#ffffff");
-  } catch (e) { VT.toast("That is too long for a QR code"); return; }
-  document.getElementById("qrResult").style.display = "block";
-}
-
-function downloadQR() {
-  document.getElementById("qrcode").toBlob(function (b) { VT.download(b, "veloce-qr.png"); });
-}
-
-document.getElementById("qrInput").addEventListener("keydown", function (e) {
-  if (e.key === "Enter") generateQR();
-});
-  </script>
 </BaseLayout>

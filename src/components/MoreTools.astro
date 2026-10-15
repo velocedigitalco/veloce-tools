@@ -1,0 +1,11 @@
+---
+import { tools } from '../data/tools';
+const { current } = Astro.props;
+const others = tools.filter((t) => t.href !== current);
+---
+<section class="more-tools" aria-label="More free tools">
+  <p class="more-tools__title">More free tools</p>
+  <div class="more-tools__chips">
+    {others.map((t) => <a href={t.href}>{t.title}</a>)}
+  </div>
+</section>

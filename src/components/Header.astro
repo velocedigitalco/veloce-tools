@@ -1,11 +1,33 @@
 ---
+import { tools } from '../data/tools';
 ---
 <nav class="nav">
   <a href="/" class="logo">Veloce <span>Tools</span></a>
   <div class="nav-links">
-    <a href="/#tools">Tools</a>
     <a href="/#why">Why Veloce</a>
-    <a href="/#about">About</a>
+    <a href="https://velocedigital.co/?utm_source=veloce_tools&utm_medium=nav" target="_blank" rel="noopener">Veloce Digital</a>
   </div>
-  <a href="/#tools" class="nav-button">Explore tools</a>
+  <button type="button" class="nav-button" id="menuBtn" aria-expanded="false" aria-controls="toolsMenu">
+    All tools <span class="chev" aria-hidden="true">▾</span>
+  </button>
+  <div class="tools-menu" id="toolsMenu" hidden>
+    <div class="tools-menu__grid">
+      {tools.map((t) => (
+        <a href={t.href}><span class="ti" aria-hidden="true">{t.icon}</span>{t.title}</a>
+      ))}
+    </div>
+  </div>
 </nav>
+<script is:inline>
+(function () {
+  var btn = document.getElementById('menuBtn'), menu = document.getElementById('toolsMenu');
+  if (!btn || !menu) return;
+  function set(open) {
+    menu.hidden = !open; btn.setAttribute('aria-expanded', open ? 'true' : 'false'); btn.classList.toggle('open', open);
+  }
+  btn.addEventListener('click', function (e) { e.stopPropagation(); set(menu.hidden); });
+  menu.addEventListener('click', function (e) { if (e.target.closest('a')) set(false); });
+  document.addEventListener('click', function (e) { if (!menu.hidden && !menu.contains(e.target)) set(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !menu.hidden) { set(false); btn.focus(); } });
+})();
+</script>

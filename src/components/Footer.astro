@@ -1,11 +1,20 @@
 ---
+import { tools } from '../data/tools';
 ---
-<footer class="footer">
-  <div class="footer-brand">Veloce Tools</div>
-  <div>&copy; {new Date().getFullYear()} Veloce Digital</div>
-  <div class="footer-links">
-    <a href="/privacy">Privacy</a>
-    <a href="/terms">Terms</a>
-    <a href="https://velocedigital.co/?utm_source=veloce_tools&utm_medium=footer" target="_blank" rel="noopener">Veloce Digital</a>
+<footer>
+  <div class="footer-tools">
+    <p class="footer-tools__title">All tools</p>
+    <div class="footer-tools__grid">
+      {tools.map((t) => <a href={t.href}>{t.title}</a>)}
+    </div>
+  </div>
+  <div class="footer">
+    <div class="footer-brand">Veloce Tools</div>
+    <div>&copy; {new Date().getFullYear()} Veloce Digital</div>
+    <div class="footer-links">
+      <a href="/privacy">Privacy</a>
+      <a href="/terms">Terms</a>
+      <a href="https://velocedigital.co/?utm_source=veloce_tools&utm_medium=footer" target="_blank" rel="noopener">Veloce Digital</a>
+    </div>
   </div>
 </footer>
